@@ -11,6 +11,30 @@
 #include "utils.h"
 
 
+int 
+validate_ed25519_pk_and_sig(const unsigned char *sig, const unsigned char *pk)
+{
+#ifdef ED25519_COMPAT
+    if (sig[63] & 224) {
+        return -1;
+    }
+#else
+    if (sc25519_is_canonical_vartime(sig + 32) == 0)  {
+        return -1;
+    }
+    if (ge25519_is_canonical_vartime(sig) == 0 ||
+        ge25519_has_small_order(sig) != 0) {
+        return -1;
+    }
+
+    if (ge25519_is_canonical_vartime(pk) == 0 ||
+        ge25519_has_small_order(pk) != 0) {
+        return -1;
+    }
+#endif
+    return 0;
+}
+
 int
 _crypto_sign_ed25519_verify_detached(const unsigned char *sig,
                                      const unsigned char *m,
@@ -32,27 +56,11 @@ _crypto_sign_ed25519_verify_detached(const unsigned char *sig,
     ge25519_p3               r_diff;
     ge25519_cached           cached;
 
-
-
-
-#ifdef ED25519_COMPAT
-    if (sig[63] & 224) {
-        return -1;
-    }
-#else
-    if (sc25519_is_canonical_vartime(sig + 32) == 0)  {
-        return -1;
-    }
-    if (ge25519_is_canonical_vartime(sig) == 0 ||
-        ge25519_has_small_order(sig) != 0) {
-        return -1;
+    int pk_sig_valid = validate_ed25519_pk_and_sig(sig,pk);
+    if (pk_sig_valid != 0){
+        return pk_sig_valid;
     }
 
-    if (ge25519_is_canonical_vartime(pk) == 0 ||
-        ge25519_has_small_order(pk) != 0) {
-        return -1;
-    }
-#endif
     if (ge25519_frombytes_negate_vartime(&A, pk) != 0) {
         return -1;
     }
