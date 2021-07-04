@@ -238,6 +238,10 @@ func (cs *roundCowState) Get(addr basics.Address, withPendingRewards bool) (basi
 	return acct, nil
 }
 
+func (cs *roundCowState) GetCreatableID(groupIdx int) basics.CreatableIndex {
+	return cs.getCreatableIndex(groupIdx)
+}
+
 func (cs *roundCowState) GetCreator(cidx basics.CreatableIndex, ctype basics.CreatableType) (basics.Address, bool, error) {
 	return cs.getCreator(cidx, ctype)
 }
@@ -248,6 +252,11 @@ func (cs *roundCowState) Put(addr basics.Address, acct basics.AccountData) error
 
 func (cs *roundCowState) PutWithCreatable(addr basics.Address, acct basics.AccountData, newCreatable *basics.CreatableLocator, deletedCreatable *basics.CreatableLocator) error {
 	cs.put(addr, acct, newCreatable, deletedCreatable)
+
+	// store the creatable locator
+	if newCreatable != nil {
+		cs.trackCreatable(newCreatable.Index)
+	}
 	return nil
 }
 
@@ -726,6 +735,7 @@ func (eval *BlockEvaluator) transactionGroup(txgroup []transactions.SignedTxnWit
 	for gi, txad := range txgroup {
 		var txib transactions.SignedTxnInBlock
 
+		cow.setGroupIdx(gi)
 		err := eval.transaction(txad.SignedTxn, evalParams[gi], txad.ApplyData, cow, &txib)
 		if err != nil {
 			return err
@@ -1174,7 +1184,15 @@ func eval(ctx context.Context, l ledgerForEvaluator, blk bookkeeping.Block, vali
 		return ledgercore.StateDelta{}, err
 	}
 
-	paysetgroupsCh := loadAccounts(ctx, l, blk.Round()-1, paysetgroups, blk.BlockHeader.FeeSink, blk.ConsensusProtocol())
+	accountLoadingCtx, accountLoadingCancel := context.WithCancel(ctx)
+	paysetgroupsCh := loadAccounts(accountLoadingCtx, l, blk.Round()-1, paysetgroups, blk.BlockHeader.FeeSink, blk.ConsensusProtocol())
+	// ensure that before we exit from this method, the account loading is no longer active.
+	defer func() {
+		accountLoadingCancel()
+		// wait for the paysetgroupsCh to get closed.
+		for range paysetgroupsCh {
+		}
+	}()
 
 	var txvalidator evalTxValidator
 	if validate {
@@ -1222,7 +1240,7 @@ transactionGroupLoop:
 		}
 	}
 
-	// Finally, procees any pending end-of-block state changes
+	// Finally, proceeds any pending end-of-block state changes
 	err = eval.endOfBlock()
 	if err != nil {
 		return ledgercore.StateDelta{}, err

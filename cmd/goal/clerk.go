@@ -375,6 +375,14 @@ var sendCmd = &cobra.Command{
 			payment.RekeyTo = rekeyTo
 		}
 
+		// ConstructPayment fills in the suggested fee when fee=0. But if the user actually used --fee=0 on the
+		// commandline, we ought to do what they asked (especially now that zero or low fees make sense in
+		// combination with other txns that cover the groups's fee.
+		explicitFee := cmd.Flags().Changed("fee")
+		if explicitFee {
+			payment.Fee = basics.MicroAlgos{Raw: fee}
+		}
+
 		var stx transactions.SignedTxn
 		if lsig.Logic != nil {
 
@@ -829,7 +837,7 @@ var groupCmd = &cobra.Command{
 		transactionIdx := 0
 		for {
 			var stxn transactions.SignedTxn
-			// we decode the file into a SignedTxn since we want to verify the absense of the signature as well as preserve the AuthAddr.
+			// we decode the file into a SignedTxn since we want to verify the absence of the signature as well as preserve the AuthAddr.
 			err = dec.Decode(&stxn)
 			if err == io.EOF {
 				break

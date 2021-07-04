@@ -49,7 +49,7 @@ const txnPerWorksetThreshold = 64
 
 // When the PaysetGroups is generating worksets, it enqueues up to concurrentWorksets entries to the execution pool. This serves several
 // purposes :
-// - if the verification task need to be aborted, there are only concurrentWorksets entries that are currently redundent on the execution pool queue.
+// - if the verification task need to be aborted, there are only concurrentWorksets entries that are currently redundant on the execution pool queue.
 // - that number of concurrent tasks would not get beyond the capacity of the execution pool back buffer.
 // - if we were to "redundently" execute all these during context cancelation, we would spent at most 2ms * 16 = 32ms time.
 // - it allows us to linearly scan the input, and process elements only once we're going to queue them into the pool.
@@ -117,11 +117,7 @@ func txn(s *transactions.SignedTxn, txnIdx int, groupCtx *GroupContext, batchVer
 		return err
 	}
 
-	if s.Txn.Src().IsZero() {
-		return errors.New("empty address")
-	}
-
-	return stxnVerifyCore(s, txnIdx, groupCtx, batchVerifier)
+	return stxnVerifyCore(s, txnIdx, groupCtx)
 }
 
 // TxnGroup verifies a []SignedTxn as being signed and having no obviously inconsistent data.
@@ -137,15 +133,17 @@ func TxnGroupVerifiyInBatch(stxs []transactions.SignedTxn, contextHdr bookkeepin
 	if err != nil {
 		return nil, err
 	}
-
 	for i, stxn := range stxs {
 		err = txn(&stxn, i, groupCtx, verifier)
 		if err != nil {
 			err = fmt.Errorf("transaction %+v invalid : %w", stxn, err)
 			return
 		}
+		if stxn.Txn.Type != protocol.CompactCertTx {
+			minFeeCount++
+		}
+		feesPaid = basics.AddSaturate(feesPaid, stxn.Txn.Fee.Raw)
 	}
-
 	if cache != nil {
 		cache.Add(stxs, groupCtx)
 	}
