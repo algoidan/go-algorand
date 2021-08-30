@@ -1034,7 +1034,7 @@ func TestGlobal(t *testing.T) {
 	addr, err := basics.UnmarshalChecksumAddress(testAddr)
 	require.NoError(t, err)
 	ledger.creatorAddr = addr
-	for v := uint64(0); v <= AssemblerMaxVersion; v++ {
+	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		_, ok := tests[v]
 		require.True(t, ok)
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
@@ -1055,9 +1055,6 @@ func TestGlobal(t *testing.T) {
 			txgroup := make([]transactions.SignedTxn, 1)
 			txgroup[0] = txn
 			sb := strings.Builder{}
-			block := bookkeeping.Block{}
-			block.BlockHeader.Round = 999999
-			block.BlockHeader.TimeStamp = 2069
 			proto := config.ConsensusParams{
 				MinTxnFee:         123,
 				MinBalance:        1000000,
@@ -2684,10 +2681,9 @@ func TestStackUnderflow(t *testing.T) {
 	t.Parallel()
 	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
-			ops, err := AssembleStringWithVersion(`int 1`, v)
+			ops := testProg(t, `int 1`, v)
 			ops.Program = append(ops.Program, 0x08) // +
-			require.NoError(t, err)
-			err = Check(ops.Program, defaultEvalParams(nil, nil))
+			err := Check(ops.Program, defaultEvalParams(nil, nil))
 			require.NoError(t, err)
 			sb := strings.Builder{}
 			pass, err := Eval(ops.Program, defaultEvalParams(&sb, nil))
@@ -2707,10 +2703,9 @@ func TestWrongStackTypeRuntime(t *testing.T) {
 	t.Parallel()
 	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
-			ops, err := AssembleStringWithVersion(`int 1`, v)
-			require.NoError(t, err)
+			ops := testProg(t, `int 1`, v)
 			ops.Program = append(ops.Program, 0x01, 0x15) // sha256, len
-			err = Check(ops.Program, defaultEvalParams(nil, nil))
+			err := Check(ops.Program, defaultEvalParams(nil, nil))
 			require.NoError(t, err)
 			sb := strings.Builder{}
 			pass, err := Eval(ops.Program, defaultEvalParams(&sb, nil))
@@ -2730,11 +2725,9 @@ func TestEqMismatch(t *testing.T) {
 	t.Parallel()
 	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
-			ops, err := AssembleStringWithVersion(`byte 0x1234
-int 1`, v)
-			require.NoError(t, err)
+			ops := testProg(t, `byte 0x1234; int 1`, v)
 			ops.Program = append(ops.Program, 0x12) // ==
-			err = Check(ops.Program, defaultEvalParams(nil, nil))
+			err := Check(ops.Program, defaultEvalParams(nil, nil))
 			require.NoError(t, err) // TODO: Check should know the type stack was wrong
 			sb := strings.Builder{}
 			pass, err := Eval(ops.Program, defaultEvalParams(&sb, nil))
@@ -2754,11 +2747,9 @@ func TestNeqMismatch(t *testing.T) {
 	t.Parallel()
 	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
-			ops, err := AssembleStringWithVersion(`byte 0x1234
-int 1`, v)
-			require.NoError(t, err)
+			ops := testProg(t, `byte 0x1234; int 1`, v)
 			ops.Program = append(ops.Program, 0x13) // !=
-			err = Check(ops.Program, defaultEvalParams(nil, nil))
+			err := Check(ops.Program, defaultEvalParams(nil, nil))
 			require.NoError(t, err) // TODO: Check should know the type stack was wrong
 			sb := strings.Builder{}
 			pass, err := Eval(ops.Program, defaultEvalParams(&sb, nil))
@@ -2778,11 +2769,9 @@ func TestWrongStackTypeRuntime2(t *testing.T) {
 	t.Parallel()
 	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
-			ops, err := AssembleStringWithVersion(`byte 0x1234
-int 1`, v)
-			require.NoError(t, err)
+			ops := testProg(t, `byte 0x1234; int 1`, v)
 			ops.Program = append(ops.Program, 0x08) // +
-			err = Check(ops.Program, defaultEvalParams(nil, nil))
+			err := Check(ops.Program, defaultEvalParams(nil, nil))
 			require.NoError(t, err)
 			sb := strings.Builder{}
 			pass, _ := Eval(ops.Program, defaultEvalParams(&sb, nil))
@@ -2802,15 +2791,14 @@ func TestIllegalOp(t *testing.T) {
 	t.Parallel()
 	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
-			ops, err := AssembleStringWithVersion(`int 1`, v)
-			require.NoError(t, err)
+			ops := testProg(t, `int 1`, v)
 			for opcode, spec := range opsByOpcode[v] {
 				if spec.op == nil {
 					ops.Program = append(ops.Program, byte(opcode))
 					break
 				}
 			}
-			err = Check(ops.Program, defaultEvalParams(nil, nil))
+			err := Check(ops.Program, defaultEvalParams(nil, nil))
 			require.Error(t, err)
 			sb := strings.Builder{}
 			pass, err := Eval(ops.Program, defaultEvalParams(&sb, nil))
@@ -2830,15 +2818,14 @@ func TestShortProgram(t *testing.T) {
 	t.Parallel()
 	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
 		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
-			ops, err := AssembleStringWithVersion(`int 1
+			ops := testProg(t, `int 1
 bnz done
 done:
 int 1
 `, v)
-			require.NoError(t, err)
 			// cut two last bytes - intc_1 and last byte of bnz
 			ops.Program = ops.Program[:len(ops.Program)-2]
-			err = Check(ops.Program, defaultEvalParams(nil, nil))
+			err := Check(ops.Program, defaultEvalParams(nil, nil))
 			require.Error(t, err)
 			sb := strings.Builder{}
 			pass, err := Eval(ops.Program, defaultEvalParams(&sb, nil))
@@ -4064,14 +4051,14 @@ func TestAllowedOpcodesV2(t *testing.T) {
 		"dup2":              "int 1; int 2; dup2",
 		"concat":            "byte 0x41; dup; concat",
 		"substring":         "byte 0x41; substring 0 1",
-		"substring3":        "byte 0x41; dup; dup; substring3",
+		"substring3":        "byte 0x41; int 0; int 1; substring3",
 		"balance":           "int 1; balance",
 		"app_opted_in":      "int 0; dup; app_opted_in",
 		"app_local_get":     "int 0; byte 0x41; app_local_get",
 		"app_local_get_ex":  "int 0; dup; byte 0x41; app_local_get_ex",
 		"app_global_get":    "int 0; byte 0x41; app_global_get",
 		"app_global_get_ex": "int 0; byte 0x41; app_global_get_ex",
-		"app_local_put":     "int 0; dup; byte 0x41; app_local_put",
+		"app_local_put":     "int 0; byte 0x41; dup; app_local_put",
 		"app_global_put":    "byte 0x41; dup; app_global_put",
 		"app_local_del":     "int 0; byte 0x41; app_local_del",
 		"app_global_del":    "byte 0x41; app_global_del",
@@ -4733,4 +4720,130 @@ func TestBytesConversions(t *testing.T) {
 
 	testAccepts(t, "byte 0x11; byte 0x10; b+; btoi; int 0x21; ==", 4)
 	testAccepts(t, "byte 0x0011; byte 0x10; b+; btoi; int 0x21; ==", 4)
+}
+
+func TestLog(t *testing.T) {
+	partitiontest.PartitionTest(t)
+
+	t.Parallel()
+	proto := defaultEvalProtoWithVersion(LogicVersion)
+	txn := transactions.SignedTxn{
+		Txn: transactions.Transaction{
+			Type: protocol.ApplicationCallTx,
+		},
+	}
+	ledger := makeTestLedger(nil)
+	ledger.newApp(txn.Txn.Receiver, 0, basics.AppParams{})
+	sb := strings.Builder{}
+	ep := defaultEvalParams(&sb, &txn)
+	ep.Proto = &proto
+	ep.Ledger = ledger
+	testCases := []struct {
+		source string
+		loglen int
+	}{
+		{
+			source: `byte  "a logging message"; log; int 1`,
+			loglen: 1,
+		},
+		{
+			source: `byte  "a logging message"; log; byte  "a logging message"; log; int 1`,
+			loglen: 2,
+		},
+		{
+			source: fmt.Sprintf(`%s int 1`, strings.Repeat(`byte "a logging message"; log;`, MaxLogCalls)),
+			loglen: MaxLogCalls,
+		},
+		{
+			source: `int 1; loop: byte "a logging message"; log; int 1; +; dup; int 30; <=; bnz loop;`,
+			loglen: 30,
+		},
+		{
+			source: fmt.Sprintf(`byte "%s"; log; int 1`, strings.Repeat("a", MaxLogSize)),
+			loglen: 1,
+		},
+	}
+
+	//track expected number of logs in ep.Ledger
+	count := 0
+	for i, s := range testCases {
+		ops := testProg(t, s.source, AssemblerMaxVersion)
+
+		err := CheckStateful(ops.Program, ep)
+		require.NoError(t, err, s)
+
+		pass, err := EvalStateful(ops.Program, ep)
+		require.NoError(t, err)
+		require.True(t, pass)
+		count += s.loglen
+		require.Equal(t, len(ledger.logs), count)
+		if i == len(testCases)-1 {
+			require.Equal(t, strings.Repeat("a", MaxLogSize), ledger.logs[count-1].Message)
+		} else {
+			for _, l := range ledger.logs[count-s.loglen:] {
+				require.Equal(t, "a logging message", l.Message)
+			}
+		}
+	}
+
+	msg := strings.Repeat("a", 400)
+	failCases := []struct {
+		source      string
+		runMode     runMode
+		errContains string
+	}{
+		{
+			source:      fmt.Sprintf(`byte  "%s"; log; int 1`, strings.Repeat("a", MaxLogSize+1)),
+			errContains: fmt.Sprintf(">  %d bytes limit", MaxLogSize),
+			runMode:     runModeApplication,
+		},
+		{
+			source:      fmt.Sprintf(`byte  "%s"; log; byte  "%s"; log; byte  "%s"; log; int 1`, msg, msg, msg),
+			errContains: fmt.Sprintf(">  %d bytes limit", MaxLogSize),
+			runMode:     runModeApplication,
+		},
+		{
+			source:      fmt.Sprintf(`%s; int 1`, strings.Repeat(`byte "a"; log;`, MaxLogCalls+1)),
+			errContains: "too many log calls",
+			runMode:     runModeApplication,
+		},
+		{
+			source:      `int 1; loop: byte "a"; log; int 1; +; dup; int 35; <; bnz loop;`,
+			errContains: "too many log calls",
+			runMode:     runModeApplication,
+		},
+		{
+			source:      fmt.Sprintf(`int 1; loop: byte "%s"; log; int 1; +; dup; int 6; <; bnz loop;`, strings.Repeat(`a`, 400)),
+			errContains: fmt.Sprintf(">  %d bytes limit", MaxLogSize),
+			runMode:     runModeApplication,
+		},
+		{
+			source:      `load 0; log`,
+			errContains: "log arg 0 wanted []byte but got uint64",
+			runMode:     runModeApplication,
+		},
+		{
+			source:      `byte  "a logging message"; log; int 1`,
+			errContains: "log not allowed in current mode",
+			runMode:     runModeSignature,
+		},
+	}
+
+	for _, c := range failCases {
+		ops := testProg(t, c.source, AssemblerMaxVersion)
+
+		err := CheckStateful(ops.Program, ep)
+		require.NoError(t, err, c)
+
+		var pass bool
+		switch c.runMode {
+		case runModeApplication:
+			pass, err = EvalStateful(ops.Program, ep)
+		default:
+			pass, err = Eval(ops.Program, ep)
+
+		}
+		require.Contains(t, err.Error(), c.errContains)
+		require.False(t, pass)
+	}
 }
