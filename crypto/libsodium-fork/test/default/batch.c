@@ -1,17 +1,25 @@
-
-#define TEST_NAME "sign"
+#define TEST_NAME "batch"
 #include "cmptest.h"
 
-static const unsigned char keypair_seed[]
-    = { 0x42, 0x11, 0x51, 0xa4, 0x59, 0xfa, 0xea, 0xde, 0x3d, 0x24, 0x71,
-        0x15, 0xf9, 0x4a, 0xed, 0xae, 0x42, 0x31, 0x81, 0x24, 0x09, 0x5a,
-        0xfa, 0xbe, 0x4d, 0x14, 0x51, 0xa5, 0x59, 0xfa, 0xed, 0xee };
+
+#define SAMPLE_SIZE 1025
+#define MINIMAL_BATCH_SIZE 4
+#define MAX_BATCH_SIZE 64
+
+
+
+typedef void (random_function_t)(void * const , const size_t );
+
+static random_function_t *rand_func_iml;
+
+
+
 
 typedef struct TestData_ {
-    const unsigned char  sk[crypto_sign_SEEDBYTES];
-    const unsigned char  pk[crypto_sign_PUBLICKEYBYTES];
-    const unsigned char  sig[crypto_sign_BYTES];
-    const char          *m;
+	unsigned char  sk[crypto_sign_SEEDBYTES];
+    unsigned char  pk[crypto_sign_PUBLICKEYBYTES];
+    unsigned char  sig[crypto_sign_BYTES];
+    char          *m;
 } TestData;
 
 static TestData test_data[] = {
@@ -1039,28 +1047,15 @@ static TestData test_data[] = {
 {{0xfd,0xa7,0xcb,0x08,0x40,0x16,0xba,0x51,0x3c,0x7c,0x4f,0x8f,0x71,0x80,0x48,0x0b,0xb1,0x81,0xe9,0x56,0x95,0xea,0x68,0x73,0x7f,0xa3,0x4a,0x40,0xec,0xbd,0xf3,0xef,},{0xa2,0xde,0x3a,0x0e,0xf9,0x72,0x98,0xfd,0x71,0x61,0x06,0xe2,0xf3,0xf5,0x45,0x13,0x05,0x7a,0x40,0x07,0x2d,0x23,0x4c,0x35,0x18,0x15,0x4c,0x1b,0xd1,0x2d,0xe0,0x37,},{0x33,0x61,0x4b,0x7a,0x94,0xf7,0x5e,0x03,0x65,0x34,0xd7,0x6e,0x30,0x14,0x7e,0xcc,0xdd,0x2a,0x04,0xe0,0x0c,0xd4,0x70,0x4a,0xb6,0xe8,0x07,0xd6,0xa2,0xac,0xc1,0xe1,0xd9,0x63,0xb8,0xee,0xe0,0x81,0x0d,0x41,0x2d,0x9d,0x56,0xe5,0x45,0x56,0x30,0x2b,0x10,0x73,0x0c,0x15,0xab,0xf8,0x9c,0x29,0xa0,0x27,0x30,0x3e,0xa8,0x8a,0xe7,0x01,},"\xc2\x1b\xb3\xf8\xe3\x7b\xef\xa3\x67\xc9\x13\x67\x31\x01\xba\x30\xd3\xb5\xc7\x4b\xd8\xbd\xb0\x9c\xd2\x86\x40\x01\x2d\xb4\x11\x20\xc2\xbc\xc4\x08\x5d\xe2\xa0\xf9\x5c\x92\x15\xdd\xef\x8c\xb5\xfc\x8d\x8b\x12\x51\xb4\x15\x27\xc6\x7d\xfa\xa3\xf9\x5b\xa3\x57\x83\x91\xea\x5a\x66\x29\xa7\x33\x09\x5f\xd0\xa4\x3f\xdb\xa4\x0f\xfe\x26\x0f\xff\x82\xac\xee\x2e\xbe\x98\x0e\x9e\xce\xcc\xfe\x7e\x10\xb2\xed\x8c\x2e\x6b\x41\x0d\x54\x7a\x12\x86\x57\x1d\xf3\xd7\x01\x17\x4e\x57\x9f\xcf\x19\xd3\xbd\x80\x86\xc0\x42\x3f\x37\x11\x77\x89\xf3\x05\xd9\x67\x0a\xd2\x8c\x99\x67\x4f\x52\xcf\x64\x21\x1a\x08\x1d\x0c\x6c\x30\x96\xda\x2c\x71\xbf\x5f\x57\x99\xa7\x91\x0e\x6f\x38\x10\x4a\x37\xa6\x55\x7c\x2d\xae\xf3\x40\x81\x4a\x1f\x83\x0d\x59\x37\x73\xc6\xcf\x48\xd8\x3e\xa0\x72\x94\xb9\x4e\xb0\x80\xb8\x5d\x69\x70\xe2\x8f\x40\x51\xd5\x06\x6d\xb1\x0e\x96\x19\x73\xa6\x26\xa8\x26\xae\xaf\x8a\x06\xec\x0d\x56\x6b\x7e\x0c\x4e\xf6\x0f\x0c\x56\x78\xfc\xbb\x5b\x2a\xc6\x3f\x7b\xed\x06\x44\x8a\x24\x7b\x3d\x42\x7b\x87\x08\x6d\x33\x57\x3f\xb2\xd7\x22\x8c\x5c\x34\xea\x66\x40\xee\xfa\x95\x64\x48\x5a\x79\x63\x8e\x9c\x97\xc0\xaf\x84\xcf\xee\x7c\xe4\xa7\x39\x22\x0c\x84\x29\xe0\x67\x14\x39\x53\xd5\x50\x66\x8d\xad\xc8\x4e\x7b\xed\x9a\xb0\x70\xa5\x94\x33\x90\xc6\x11\xd7\x5b\x1c\xb1\x28\x73\xa3\x7d\x98\x50\x66\x1a\x00\x77\xbf\xa9\xca\x9b\x8b\x26\x37\x66\xc1\x49\xff\x0e\xe4\xb4\xad\xba\x25\xea\xf7\xd7\xf5\x01\xf3\x62\x45\x42\x56\xbc\x12\x69\x37\x8e\xf3\x35\x9a\x8e\xd6\xb9\x60\xb8\x66\x21\xfa\x3b\x61\x3e\xb1\x32\x12\x2f\x49\xf2\xeb\x2c\xeb\x68\x32\xa3\x99\x1e\x96\x1c\xb0\xe7\x8b\x74\x2e\xf4\xd6\x5e\x8d\xe3\x46\x96\x66\xfe\xc7\xc5\xb8\x74\x78\x95\x71\xc5\xc9\x9a\x2c\x02\xa0\x53\xff\x7d\x2f\xc9\x00\x76\xba\xfe\x1f\x26\x7f\xa8\x1a\x39\x90\xf2\x7f\xf1\x4f\x03\x00\x0a\xf0\x0c\x59\x28\x6c\xb9\xbb\x98\xe2\x04\xe9\x01\x90\xae\x2a\x50\xed\xef\x04\x9e\xa9\x2a\x1f\x78\x50\x88\xf9\x4a\xdf\x65\x88\xfb\x43\xbb\x40\xfb\xe2\x32\x42\x35\xcc\x7e\x16\x8b\x80\x26\x4b\x06\x9f\x94\x4f\x50\x36\x92\xc9\x49\x23\x4d\x5b\x76\xbc\xff\xab\xe2\x9f\xf9\x06\x4b\xd7\xcb\xed\x9e\x00\xe5\xb7\xfd\xda\x43\x12\xeb\x80\x14\x65\xf1\x27\xd0\xca\x68\x83\x2a\x7f\x4e\xd0\xea\xed\x8f\x55\x9c\x16\x31\xcd\x4d\x34\xf0\xdc\x41\x4d\x9f\xcf\xe8\x49\xa9\x1e\x25\xf3\xe0\xff\x01\x3a\x8c\xff\xa8\x06\xed\x8e\x93\xd0\x8a\x1e\x5a\x75\x76\x82\xca\x3d\x26\xab\xc8\x69\xc7\x6f\x1c\x79\x00\x7d\x55\x9d\xfe\x67\xe7\x8d\x8a\xf0\x19\x58\x08\xb0\xe7\x71\xc7\x1e\x64\xb5\x71\x6f\xb3\x63\x09\xc2\x50\x25\xfa\xe6\x41\x4c\x28\xbb\xdb\xd4\xde\x59\x7a\x74\x99\x6c\x9d\xa9\x74\x92\x0d\x59\xe6\xf4\xc2\xed\xfe\x11\x0f\xf8\x17\xfd\x48\x0a\x50\x80\x97\x80\x48\x86\x57\x12\x05\x8c\x5f\xe7\xb5\x60\xb1\x2b\x67\xf7\x37\xea\x6e\x2a\xf9\x24\x2c\xf0\x7a\xd0\xa8\xa6\x79\xf2\x64\x30\x04\x6a\xdc\x3e\x70\x66\x4c\xc9\xc0\xee\x5a\xbc\xef\x6d\x72\x6b\x4e\x04\x17\x60\x48\xb7\x95\xbe\x12\x85\x1b\xdb\x74\x00\x3a\x13\x20\x41\x19\xb8\x68\x64\xd6\x53\x5b\xa0\x95\x04\x0a\x85\xd9\x78\x1c\xf4\xf3\x48\x0a\x30\x4e\x22\x7f\x78\x7a\xd5\x38\xe6\x8f\x4b\xab\x01\x41\x79\xe3\x0d\x3f\xde\xf9\xef\xf1\x1b\xcf\x47\x1f\xa3\xa0\xbc\x74\xb5\x57\x6f\x30\x2d\x3a\x6b\x49\x9f\x11\xf2\xef\x32\x6a\xc0\x26\xc9\x8d\xb1\x0e\x27\x41\x41\x3f\x32\x22\x28\xb3\xcf\xf0\xf3\x37\xba\x2f\x29\x4c\x78\xef\x73\xf0\xe8\x77\x87\x8f\x8f\xc7\xff\x6d\x10\xbc\xe6\x6a\xd6\x28\x43\x79\xb8\x0c\xa8\x93\x27\xd4\xdb\x0b\xf1\x4e\x6d\x8f\x01\xb2\x2a\xb2\x02\xb7\x16\xcc\x07\xe3\xc8\x86\x6d\x16\x8a\x50\x94\xba\xc5\xa4\x95\xe7\x38\x68\xee\xdc\x27\x22\x2e\x64\x44\xf8\x3b\xcf\x65\xac\xdc\x3e\xc8\x91\x20\xbb\x50\xe8\xab\xfc\x28\xb7\x8e\x6d\x98\x0c\x77\x5f\x48\x49\xa0\xe8\xca\xda\x80\x24\x0b\xca\x24\x5e\x39\x96\x6e\x89\xa0\x34\x4d\xf8\x36\x3a\x7d\xcc\x81\xb2\x01\xce\x9c\x75\x3a\xd5\x44\xe1\x12\x4e\x21\x02\x0d\x4c\x62\xde\xda\x9e\xd9\xb9\xd1\xf2\xfb\x7c\x54\xca\x7a\xb0\x9f\x38\x3b\xef\x48\xcf\xc6\x84\x8c\x27\x13\x02\xa1\x0f\xa6\x87\xf5\x6e\x00\xe0\xa7\xd0\x93\xc9\x27\xb4\xfd\xd8\xf1\xbe\xdf\x62\x88\xa0\xe3\x02\x84\x8a\x80\x12\xf1\x27\xa7\x9d\x2d\x30\xa0\x6c\xe1\x7d\x94\xaa\x6f\x7f\x8a\x1e\x6e\xb9\xd0\x68\x1c\x37\x74\xf6\x14\xcc\x6d\xbc\xb2\xa8\x13\xf9\x25\xc6\x30\x6a\x63\x05\x72\xa8\x3e\xc1\x09\xd5\xf5\x33\xc0\x58\x4c\xb4\x21\xd9\x19"},
 {{0xa1,0xac,0x48,0xaa,0x5f,0xfa,0x3d,0x80,0x08,0x19,0xd0,0x3b,0x7f,0x62,0xba,0xbf,0x29,0x1f,0x20,0x90,0x4c,0x11,0xa6,0x40,0x0e,0x4f,0x45,0x20,0x5f,0x10,0x3e,0x38,},{0x08,0x54,0xe0,0x34,0x0f,0x81,0x49,0x85,0xfb,0x12,0x2b,0x78,0x72,0x94,0x79,0xe3,0xfd,0xe8,0x55,0xc2,0x11,0xca,0xde,0xae,0x56,0xf0,0xd4,0xdc,0x08,0x28,0xd5,0xfa,},{0xc5,0x7e,0x3c,0x09,0x1e,0xd2,0x4e,0x5e,0x84,0x66,0x5b,0xd9,0xbb,0x10,0x2d,0xb4,0x97,0x97,0xdf,0x90,0x08,0xf0,0x55,0x57,0xfa,0x0d,0x5a,0xd7,0xa2,0x95,0xe5,0xe4,0xd2,0xa4,0x71,0x6b,0x17,0xf8,0xc9,0x1c,0xb1,0x2f,0x5a,0xbf,0xb1,0xaf,0x02,0x7f,0xb0,0x41,0x11,0x99,0xac,0xc5,0xd2,0x85,0xd8,0x42,0xa4,0xb6,0x5b,0xde,0x49,0x02,},"\xd6\xf1\x24\xed\x75\x20\x21\xc1\x09\x26\x97\x2a\x0c\x26\xf3\xb1\x83\x8b\x3c\x7a\xf2\x47\xc1\x80\x09\xa2\x31\xec\xce\x96\x4b\xf6\x69\x86\x37\x83\x3f\x60\x7d\xca\x83\x6f\x8a\x60\x6c\x72\xae\x3c\xb1\x70\x17\x44\x47\xa2\xcc\xe5\x83\xf6\xe2\x44\xdb\xc1\x63\xe2\x15\xb9\x82\x0d\xe7\x49\x6f\xfc\x5b\x70\x50\xc4\x8f\x28\x30\x24\x66\x78\xcb\xa4\xdc\x5c\xaa\x07\xc1\x45\x85\x63\xaa\x2d\x10\xdc\xb7\x77\x0e\xf8\xfe\xde\x02\x7d\xd7\xf2\x0d\xdc\x8c\xc7\x8c\x3a\x2e\x2e\x95\x8b\xd1\x8c\x00\x06\xcf\x8f\xb8\x2d\x44\xe5\x3e\x1d\xa7\xaa\x80\xfd\x10\x06\xf3\xb2\x30\x0c\x9b\x07\x9d\x8a\x66\xf1\xe4\xa3\xf4\x70\x61\xf9\xe2\xf4\x5d\xae\x35\xdc\x29\x52\x04\xb1\x94\x60\xca\x57\x07\xab\x57\xce\x21\x5a\x24\xc1\x0f\xaa\xb3\xfa\x20\xbc\xcd\x10\x1e\x7a\x7d\x70\x07\x75\x99\xf3\xd6\x72\x57\x07\x55\x21\x29\xca\xd7\x57\xd6\x51\x4c\x1b\x28\x99\x7e\x47\x1f\x94\xb0\xfd\xed\x8f\xbb\xd0\x65\xde\xad\x19\x6d\x2c\x07\xd3\xdf\xa7\xb9\xfb\x3b\xae\x76\x80\xf7\x66\x21\x20\x0d\x09\x9e\xeb\xeb\xbe\xa0\xe8\x95\x7d\xf5\xb5\xe2\x04\xca\x3e\x9e\x29\x52\xb8\xa3\x0f\x0a\x13\x1a\x68\x67\xb1\x38\x1e\x39\x4b\x1b\x44\x43\x10\xf0\x76\x32\x66\x56\xcf\x93\x41\x67\x80\x08\xe9\x52\x51\x47\xd8\xd6\x1c\xe9\x3d\x3b\xf5\x39\x00\xca\xb9\x12\x66\x37\x17\xe0\x98\x72\x93\x83\x3d\x19\x02\xd7\xfb\x04\x7b\x99\x7b\x86\x02\x6c\x46\x7d\x7b\xb1\x7c\xf4\x57\x96\x73\x8f\x7a\x77\x4a\xc1\x26\x76\x4e\xd4\xeb\x45\x12\x43\x09\xf4\x58\x62\x60\x17\x6b\xa4\x65\x91\x8d\x48\x33\x0a\x9c\xc1\x8c\x4e\xce\xa0\xdd\xaf\x38\x94\x6a\xcc\x0e\x36\x1d\xd4\x0a\x7e\x91\x33\xce\xb5\x0e\x1c\x31\x7e\xa4\x2b\xd0\x98\x0a\x72\xb8\xba\x3d\x8a\x6c\x76\x93\xdd\x56\x02\xf3\x74\xf2\x66\x4d\xf4\xba\x56\xdf\x01\xe8\x82\xfc\xa4\x2c\xb4\xdb\x62\x1f\x47\x6c\x76\xe1\xea\x9f\xd1\x05\x91\x1a\x74\xb7\x79\x52\xd9\x91\x4a\x5a\xc0\xf9\x8a\x90\x0c\x1b\x2e\x1a\x56\xc4\xea\x85\x18\xa9\xee\x47\xc4\xed\x14\xd0\xbd\x35\xec\xa5\x60\x31\x9c\x8e\xa2\x47\x55\xd7\x1a\x4e\x03\x08\x50\xbc\x4d\xc6\x03\x89\xf3\x25\x80\x40\x21\x20\x4c\xce\xbc\x25\xfe\xdb\xd3\x2e\xdd\x8d\x84\x46\xaa\x23\xce\x56\xa8\x5f\x77\x9e\x85\x8d\x36\xaf\x7c\x07\x3c\x11\x5e\x34\x1f\x41\x2c\x66\x0f\xab\x80\x0f\xe7\x4c\x50\xe7\x14\xee\x08\x6e\x2f\xbc\x8d\x7a\xbb\xf3\xe9\x8f\xb4\x0c\xa2\x7f\x1f\x01\xa9\xaa\xdd\x8c\xc2\x27\x5c\x2d\xd3\xf7\x6e\x4c\x1d\x81\xc4\xb7\x92\xda\xec\xc9\xfe\x66\x04\x49\x41\xb8\xb2\x91\x84\x86\xdd\x4a\xcb\x56\x2a\x7b\x58\xad\x8c\x60\xc2\x1b\x83\xcf\x48\xae\xfa\x72\x56\xa1\xed\x80\x9e\x66\x98\x11\xf4\x84\x36\x49\x70\xbc\x56\x95\x08\x99\x19\xbc\x32\xd2\x8e\xa7\x52\xe8\xe3\x18\xce\xff\x46\x7f\x77\xae\x19\x77\xc5\xff\xd7\x9c\x17\xc2\xda\x8b\xc7\xf8\x23\xdd\x94\x39\x86\x83\x18\x99\x45\xf8\xb7\x92\x38\xa4\xe8\x15\xb1\x42\xb8\x66\xac\xbd\xbc\xb7\xae\xa7\xf1\x43\xff\xfb\x7c\xc2\xb4\xb5\x4b\xbf\x36\x1a\xfd\xa9\x13\xad\x6d\xf1\xe4\x9d\xfd\x6b\x53\x26\x42\xe6\x3f\x55\xd8\x93\xa4\x70\xd4\x03\x70\x66\x5c\xfb\x74\xef\xd3\xf5\x9c\xb0\xff\x60\x06\x17\x4c\xa3\x5f\x53\xb9\x7c\x54\x3e\x08\xaf\x4b\xf5\xbb\x75\xff\x90\x31\x61\x06\x52\xa3\xf6\xf2\xa0\xcf\xe9\x7e\x7a\x52\x1f\x3d\x2a\x28\x91\x14\xde\xd3\x47\x72\xb0\xe4\x98\x17\xbd\xe1\xcb\x92\x4f\xf5\x14\xe2\x86\x6a\x09\xe3\xed\xe0\x78\x2d\x2c\x0c\x98\xe6\x81\x4b\x8c\x1e\x77\x8c\xf8\x30\x63\x48\xc9\x33\xad\xb2\xe4\x72\xdb\xa0\x9d\xb9\x54\xff\x49\x64\x83\x73\x39\x5a\x2f\x01\x81\x95\x8f\xeb\x1e\xa2\x83\x4c\x99\x53\x28\x73\xdb\x5c\x88\xeb\x52\x89\xc7\x7e\x90\x01\x52\x03\xef\x50\x2a\xc8\xe1\xc4\x8f\xa1\xa0\x6d\xaf\xa6\x51\x9d\x52\xda\xe3\xc5\x56\x75\x70\xdd\x24\x34\xe6\x71\x92\x7c\x66\x36\x3f\x78\x31\x56\x89\x3f\x13\x8a\x84\xc7\x56\x64\xb3\x0a\xe4\x27\x51\x12\x73\x6d\x53\xd4\xf3\x99\xdd\xda\x3d\x23\x06\x7c\x07\x3f\x52\x1a\xfb\xa1\xf7\xbe\x58\x55\x13\xc2\xce\xc9\xc8\xf0\x8d\x2a\x22\xc3\xc8\x53\x92\xcd\x2a\xe5\x0f\x39\x28\x25\x1f\x86\xb3\x10\xc6\x9a\x0f\x8c\x4e\x85\x3a\xb3\xf3\xe8\x12\x9b\x05\x66\xef\x4b\xbb\xe8\x0b\x8c\x02\xc8\x92\x8a\x4d\xe5\x6c\x0d\x11\x9a\x45\xbb\xf5\xaf\x18\x08\xd4\x88\x85\x2d\x8a\x45\xbe\xb0\xd6\x83\x24\x8a\x4d\x65\xde\x15\x26\xb3\xd1\xd2\xff\xc1\xf2\x22\x15\xb6\x08\x46\x8c\xbc\x3b\xd3\x95\x14\xb3\x97\xfc\x0d\xb0\xf1\x13\xdb\xe6\xfc\xe4\x65\x2e\x82\xff\x89\x5b\x2b\x43\x87\xe0\x41\xd7\xe4\xe7\xbd\xe4\x69\x47\x69\x66\x5e\x81"},
 {{0xf5,0xe5,0x76,0x7c,0xf1,0x53,0x31,0x95,0x17,0x63,0x0f,0x22,0x68,0x76,0xb8,0x6c,0x81,0x60,0xcc,0x58,0x3b,0xc0,0x13,0x74,0x4c,0x6b,0xf2,0x55,0xf5,0xcc,0x0e,0xe5,},{0x27,0x81,0x17,0xfc,0x14,0x4c,0x72,0x34,0x0f,0x67,0xd0,0xf2,0x31,0x6e,0x83,0x86,0xce,0xff,0xbf,0x2b,0x24,0x28,0xc9,0xc5,0x1f,0xef,0x7c,0x59,0x7f,0x1d,0x42,0x6e,},{0x0a,0xab,0x4c,0x90,0x05,0x01,0xb3,0xe2,0x4d,0x7c,0xdf,0x46,0x63,0x32,0x6a,0x3a,0x87,0xdf,0x5e,0x48,0x43,0xb2,0xcb,0xdb,0x67,0xcb,0xf6,0xe4,0x60,0xfe,0xc3,0x50,0xaa,0x53,0x71,0xb1,0x50,0x8f,0x9f,0x45,0x28,0xec,0xea,0x23,0xc4,0x36,0xd9,0x4b,0x5e,0x8f,0xcd,0x4f,0x68,0x1e,0x30,0xa6,0xac,0x00,0xa9,0x70,0x4a,0x18,0x8a,0x03,},"\x08\xb8\xb2\xb7\x33\x42\x42\x43\x76\x0f\xe4\x26\xa4\xb5\x49\x08\x63\x21\x10\xa6\x6c\x2f\x65\x91\xea\xbd\x33\x45\xe3\xe4\xeb\x98\xfa\x6e\x26\x4b\xf0\x9e\xfe\x12\xee\x50\xf8\xf5\x4e\x9f\x77\xb1\xe3\x55\xf6\xc5\x05\x44\xe2\x3f\xb1\x43\x3d\xdf\x73\xbe\x84\xd8\x79\xde\x7c\x00\x46\xdc\x49\x96\xd9\xe7\x73\xf4\xbc\x9e\xfe\x57\x38\x82\x9a\xdb\x26\xc8\x1b\x37\xc9\x3a\x1b\x27\x0b\x20\x32\x9d\x65\x86\x75\xfc\x6e\xa5\x34\xe0\x81\x0a\x44\x32\x82\x6b\xf5\x8c\x94\x1e\xfb\x65\xd5\x7a\x33\x8b\xbd\x2e\x26\x64\x0f\x89\xff\xbc\x1a\x85\x8e\xfc\xb8\x55\x0e\xe3\xa5\xe1\x99\x8b\xd1\x77\xe9\x3a\x73\x63\xc3\x44\xfe\x6b\x19\x9e\xe5\xd0\x2e\x82\xd5\x22\xc4\xfe\xba\x15\x45\x2f\x80\x28\x8a\x82\x1a\x57\x91\x16\xec\x6d\xad\x2b\x3b\x31\x0d\xa9\x03\x40\x1a\xa6\x21\x00\xab\x5d\x1a\x36\x55\x3e\x06\x20\x3b\x33\x89\x0c\xc9\xb8\x32\xf7\x9e\xf8\x05\x60\xcc\xb9\xa3\x9c\xe7\x67\x96\x7e\xd6\x28\xc6\xad\x57\x3c\xb1\x16\xdb\xef\xef\xd7\x54\x99\xda\x96\xbd\x68\xa8\xa9\x7b\x92\x8a\x8b\xbc\x10\x3b\x66\x21\xfc\xde\x2b\xec\xa1\x23\x1d\x20\x6b\xe6\xcd\x9e\xc7\xaf\xf6\xf6\xc9\x4f\xcd\x72\x04\xed\x34\x55\xc6\x8c\x83\xf4\xa4\x1d\xa4\xaf\x2b\x74\xef\x5c\x53\xf1\xd8\xac\x70\xbd\xcb\x7e\xd1\x85\xce\x81\xbd\x84\x35\x9d\x44\x25\x4d\x95\x62\x9e\x98\x55\xa9\x4a\x7c\x19\x58\xd1\xf8\xad\xa5\xd0\x53\x2e\xd8\xa5\xaa\x3f\xb2\xd1\x7b\xa7\x0e\xb6\x24\x8e\x59\x4e\x1a\x22\x97\xac\xbb\xb3\x9d\x50\x2f\x1a\x8c\x6e\xb6\xf1\xce\x22\xb3\xde\x1a\x1f\x40\xcc\x24\x55\x41\x19\xa8\x31\xa9\xaa\xd6\x07\x9c\xad\x88\x42\x5d\xe6\xbd\xe1\xa9\x18\x7e\xbb\x60\x92\xcf\x67\xbf\x2b\x13\xfd\x65\xf2\x70\x88\xd7\x8b\x7e\x88\x3c\x87\x59\xd2\xc4\xf5\xc6\x5a\xdb\x75\x53\x87\x8a\xd5\x75\xf9\xfa\xd8\x78\xe8\x0a\x0c\x9b\xa6\x3b\xcb\xcc\x27\x32\xe6\x94\x85\xbb\xc9\xc9\x0b\xfb\xd6\x24\x81\xd9\x08\x9b\xec\xcf\x80\xcf\xe2\xdf\x16\xa2\xcf\x65\xbd\x92\xdd\x59\x7b\x07\x07\xe0\x91\x7a\xf4\x8b\xbb\x75\xfe\xd4\x13\xd2\x38\xf5\x55\x5a\x7a\x56\x9d\x80\xc3\x41\x4a\x8d\x08\x59\xdc\x65\xa4\x61\x28\xba\xb2\x7a\xf8\x7a\x71\x31\x4f\x31\x8c\x78\x2b\x23\xeb\xfe\x80\x8b\x82\xb0\xce\x26\x40\x1d\x2e\x22\xf0\x4d\x83\xd1\x25\x5d\xc5\x1a\xdd\xd3\xb7\x5a\x2b\x1a\xe0\x78\x45\x04\xdf\x54\x3a\xf8\x96\x9b\xe3\xea\x70\x82\xff\x7f\xc9\x88\x8c\x14\x4d\xa2\xaf\x58\x42\x9e\xc9\x60\x31\xdb\xca\xd3\xda\xd9\xaf\x0d\xcb\xaa\xaf\x26\x8c\xb8\xfc\xff\xea\xd9\x4f\x3c\x7c\xa4\x95\xe0\x56\xa9\xb4\x7a\xcd\xb7\x51\xfb\x73\xe6\x66\xc6\xc6\x55\xad\xe8\x29\x72\x97\xd0\x7a\xd1\xba\x5e\x43\xf1\xbc\xa3\x23\x01\x65\x13\x39\xe2\x29\x04\xcc\x8c\x42\xf5\x8c\x30\xc0\x4a\xaf\xdb\x03\x8d\xda\x08\x47\xdd\x98\x8d\xcd\xa6\xf3\xbf\xd1\x5c\x4b\x4c\x45\x25\x00\x4a\xa0\x6e\xef\xf8\xca\x61\x78\x3a\xac\xec\x57\xfb\x3d\x1f\x92\xb0\xfe\x2f\xd1\xa8\x5f\x67\x24\x51\x7b\x65\xe6\x14\xad\x68\x08\xd6\xf6\xee\x34\xdf\xf7\x31\x0f\xdc\x82\xae\xbf\xd9\x04\xb0\x1e\x1d\xc5\x4b\x29\x27\x09\x4b\x2d\xb6\x8d\x6f\x90\x3b\x68\x40\x1a\xde\xbf\x5a\x7e\x08\xd7\x8f\xf4\xef\x5d\x63\x65\x3a\x65\x04\x0c\xf9\xbf\xd4\xac\xa7\x98\x4a\x74\xd3\x71\x45\x98\x67\x80\xfc\x0b\x16\xac\x45\x16\x49\xde\x61\x88\xa7\xdb\xdf\x19\x1f\x64\xb5\xfc\x5e\x2a\xb4\x7b\x57\xf7\xf7\x27\x6c\xd4\x19\xc1\x7a\x3c\xa8\xe1\xb9\x39\xae\x49\xe4\x88\xac\xba\x6b\x96\x56\x10\xb5\x48\x01\x09\xc8\xb1\x7b\x80\xe1\xb7\xb7\x50\xdf\xc7\x59\x8d\x5d\x50\x11\xfd\x2d\xcc\x56\x00\xa3\x2e\xf5\xb5\x2a\x1e\xcc\x82\x0e\x30\x8a\xa3\x42\x72\x1a\xac\x09\x43\xbf\x66\x86\xb6\x4b\x25\x79\x37\x65\x04\xcc\xc4\x93\xd9\x7e\x6a\xed\x3f\xb0\xf9\xcd\x71\xa4\x3d\xd4\x97\xf0\x1f\x17\xc0\xe2\xcb\x37\x97\xaa\x2a\x2f\x25\x66\x56\x16\x8e\x6c\x49\x6a\xfc\x5f\xb9\x32\x46\xf6\xb1\x11\x63\x98\xa3\x46\xf1\xa6\x41\xf3\xb0\x41\xe9\x89\xf7\x91\x4f\x90\xcc\x2c\x7f\xff\x35\x78\x76\xe5\x06\xb5\x0d\x33\x4b\xa7\x7c\x22\x5b\xc3\x07\xba\x53\x71\x52\xf3\xf1\x61\x0e\x4e\xaf\xe5\x95\xf6\xd9\xd9\x0d\x11\xfa\xa9\x33\xa1\x5e\xf1\x36\x95\x46\x86\x8a\x7f\x3a\x45\xa9\x67\x68\xd4\x0f\xd9\xd0\x34\x12\xc0\x91\xc6\x31\x5c\xf4\xfd\xe7\xcb\x68\x60\x69\x37\x38\x0d\xb2\xea\xaa\x70\x7b\x4c\x41\x85\xc3\x2e\xdd\xcd\xd3\x06\x70\x5e\x4d\xc1\xff\xc8\x72\xee\xee\x47\x5a\x64\xdf\xac\x86\xab\xa4\x1c\x06\x18\x98\x3f\x87\x41\xc5\xef\x68\xd3\xa1\x01\xe8\xa3\xb8\xca\xc6\x0c\x90\x5c\x15\xfc\x91\x08\x40\xb9\x4c\x00\xa0\xb9\xd0"},
+
+{{0xf5,0xe5,0x76,0x7c,0xf1,0x53,0x31,0x95,0x17,0x63,0x0f,0x22,0x68,0x76,0xb8,0x6c,0x81,0x60,0xcc,0x58,0x3b,0xc0,0x13,0x74,0x4c,0x6b,0xf2,0x55,0xf5,0xcc,0x0e,0xe5,},{0x27,0x81,0x17,0xfc,0x14,0x4c,0x72,0x34,0x0f,0x67,0xd0,0xf2,0x31,0x6e,0x83,0x86,0xce,0xff,0xbf,0x2b,0x24,0x28,0xc9,0xc5,0x1f,0xef,0x7c,0x59,0x7f,0x1d,0x42,0x6e,},{0x0a,0xab,0x4c,0x90,0x05,0x01,0xb3,0xe2,0x4d,0x7c,0xdf,0x46,0x63,0x32,0x6a,0x3a,0x87,0xdf,0x5e,0x48,0x43,0xb2,0xcb,0xdb,0x67,0xcb,0xf6,0xe4,0x60,0xfe,0xc3,0x50,0xaa,0x53,0x71,0xb1,0x50,0x8f,0x9f,0x45,0x28,0xec,0xea,0x23,0xc4,0x36,0xd9,0x4b,0x5e,0x8f,0xcd,0x4f,0x68,0x1e,0x30,0xa6,0xac,0x00,0xa9,0x70,0x4a,0x18,0x8a,0x03,},"\x08\xb8\xb2\xb7\x33\x42\x42\x43\x76\x0f\xe4\x26\xa4\xb5\x49\x08\x63\x21\x10\xa6\x6c\x2f\x65\x91\xea\xbd\x33\x45\xe3\xe4\xeb\x98\xfa\x6e\x26\x4b\xf0\x9e\xfe\x12\xee\x50\xf8\xf5\x4e\x9f\x77\xb1\xe3\x55\xf6\xc5\x05\x44\xe2\x3f\xb1\x43\x3d\xdf\x73\xbe\x84\xd8\x79\xde\x7c\x00\x46\xdc\x49\x96\xd9\xe7\x73\xf4\xbc\x9e\xfe\x57\x38\x82\x9a\xdb\x26\xc8\x1b\x37\xc9\x3a\x1b\x27\x0b\x20\x32\x9d\x65\x86\x75\xfc\x6e\xa5\x34\xe0\x81\x0a\x44\x32\x82\x6b\xf5\x8c\x94\x1e\xfb\x65\xd5\x7a\x33\x8b\xbd\x2e\x26\x64\x0f\x89\xff\xbc\x1a\x85\x8e\xfc\xb8\x55\x0e\xe3\xa5\xe1\x99\x8b\xd1\x77\xe9\x3a\x73\x63\xc3\x44\xfe\x6b\x19\x9e\xe5\xd0\x2e\x82\xd5\x22\xc4\xfe\xba\x15\x45\x2f\x80\x28\x8a\x82\x1a\x57\x91\x16\xec\x6d\xad\x2b\x3b\x31\x0d\xa9\x03\x40\x1a\xa6\x21\x00\xab\x5d\x1a\x36\x55\x3e\x06\x20\x3b\x33\x89\x0c\xc9\xb8\x32\xf7\x9e\xf8\x05\x60\xcc\xb9\xa3\x9c\xe7\x67\x96\x7e\xd6\x28\xc6\xad\x57\x3c\xb1\x16\xdb\xef\xef\xd7\x54\x99\xda\x96\xbd\x68\xa8\xa9\x7b\x92\x8a\x8b\xbc\x10\x3b\x66\x21\xfc\xde\x2b\xec\xa1\x23\x1d\x20\x6b\xe6\xcd\x9e\xc7\xaf\xf6\xf6\xc9\x4f\xcd\x72\x04\xed\x34\x55\xc6\x8c\x83\xf4\xa4\x1d\xa4\xaf\x2b\x74\xef\x5c\x53\xf1\xd8\xac\x70\xbd\xcb\x7e\xd1\x85\xce\x81\xbd\x84\x35\x9d\x44\x25\x4d\x95\x62\x9e\x98\x55\xa9\x4a\x7c\x19\x58\xd1\xf8\xad\xa5\xd0\x53\x2e\xd8\xa5\xaa\x3f\xb2\xd1\x7b\xa7\x0e\xb6\x24\x8e\x59\x4e\x1a\x22\x97\xac\xbb\xb3\x9d\x50\x2f\x1a\x8c\x6e\xb6\xf1\xce\x22\xb3\xde\x1a\x1f\x40\xcc\x24\x55\x41\x19\xa8\x31\xa9\xaa\xd6\x07\x9c\xad\x88\x42\x5d\xe6\xbd\xe1\xa9\x18\x7e\xbb\x60\x92\xcf\x67\xbf\x2b\x13\xfd\x65\xf2\x70\x88\xd7\x8b\x7e\x88\x3c\x87\x59\xd2\xc4\xf5\xc6\x5a\xdb\x75\x53\x87\x8a\xd5\x75\xf9\xfa\xd8\x78\xe8\x0a\x0c\x9b\xa6\x3b\xcb\xcc\x27\x32\xe6\x94\x85\xbb\xc9\xc9\x0b\xfb\xd6\x24\x81\xd9\x08\x9b\xec\xcf\x80\xcf\xe2\xdf\x16\xa2\xcf\x65\xbd\x92\xdd\x59\x7b\x07\x07\xe0\x91\x7a\xf4\x8b\xbb\x75\xfe\xd4\x13\xd2\x38\xf5\x55\x5a\x7a\x56\x9d\x80\xc3\x41\x4a\x8d\x08\x59\xdc\x65\xa4\x61\x28\xba\xb2\x7a\xf8\x7a\x71\x31\x4f\x31\x8c\x78\x2b\x23\xeb\xfe\x80\x8b\x82\xb0\xce\x26\x40\x1d\x2e\x22\xf0\x4d\x83\xd1\x25\x5d\xc5\x1a\xdd\xd3\xb7\x5a\x2b\x1a\xe0\x78\x45\x04\xdf\x54\x3a\xf8\x96\x9b\xe3\xea\x70\x82\xff\x7f\xc9\x88\x8c\x14\x4d\xa2\xaf\x58\x42\x9e\xc9\x60\x31\xdb\xca\xd3\xda\xd9\xaf\x0d\xcb\xaa\xaf\x26\x8c\xb8\xfc\xff\xea\xd9\x4f\x3c\x7c\xa4\x95\xe0\x56\xa9\xb4\x7a\xcd\xb7\x51\xfb\x73\xe6\x66\xc6\xc6\x55\xad\xe8\x29\x72\x97\xd0\x7a\xd1\xba\x5e\x43\xf1\xbc\xa3\x23\x01\x65\x13\x39\xe2\x29\x04\xcc\x8c\x42\xf5\x8c\x30\xc0\x4a\xaf\xdb\x03\x8d\xda\x08\x47\xdd\x98\x8d\xcd\xa6\xf3\xbf\xd1\x5c\x4b\x4c\x45\x25\x00\x4a\xa0\x6e\xef\xf8\xca\x61\x78\x3a\xac\xec\x57\xfb\x3d\x1f\x92\xb0\xfe\x2f\xd1\xa8\x5f\x67\x24\x51\x7b\x65\xe6\x14\xad\x68\x08\xd6\xf6\xee\x34\xdf\xf7\x31\x0f\xdc\x82\xae\xbf\xd9\x04\xb0\x1e\x1d\xc5\x4b\x29\x27\x09\x4b\x2d\xb6\x8d\x6f\x90\x3b\x68\x40\x1a\xde\xbf\x5a\x7e\x08\xd7\x8f\xf4\xef\x5d\x63\x65\x3a\x65\x04\x0c\xf9\xbf\xd4\xac\xa7\x98\x4a\x74\xd3\x71\x45\x98\x67\x80\xfc\x0b\x16\xac\x45\x16\x49\xde\x61\x88\xa7\xdb\xdf\x19\x1f\x64\xb5\xfc\x5e\x2a\xb4\x7b\x57\xf7\xf7\x27\x6c\xd4\x19\xc1\x7a\x3c\xa8\xe1\xb9\x39\xae\x49\xe4\x88\xac\xba\x6b\x96\x56\x10\xb5\x48\x01\x09\xc8\xb1\x7b\x80\xe1\xb7\xb7\x50\xdf\xc7\x59\x8d\x5d\x50\x11\xfd\x2d\xcc\x56\x00\xa3\x2e\xf5\xb5\x2a\x1e\xcc\x82\x0e\x30\x8a\xa3\x42\x72\x1a\xac\x09\x43\xbf\x66\x86\xb6\x4b\x25\x79\x37\x65\x04\xcc\xc4\x93\xd9\x7e\x6a\xed\x3f\xb0\xf9\xcd\x71\xa4\x3d\xd4\x97\xf0\x1f\x17\xc0\xe2\xcb\x37\x97\xaa\x2a\x2f\x25\x66\x56\x16\x8e\x6c\x49\x6a\xfc\x5f\xb9\x32\x46\xf6\xb1\x11\x63\x98\xa3\x46\xf1\xa6\x41\xf3\xb0\x41\xe9\x89\xf7\x91\x4f\x90\xcc\x2c\x7f\xff\x35\x78\x76\xe5\x06\xb5\x0d\x33\x4b\xa7\x7c\x22\x5b\xc3\x07\xba\x53\x71\x52\xf3\xf1\x61\x0e\x4e\xaf\xe5\x95\xf6\xd9\xd9\x0d\x11\xfa\xa9\x33\xa1\x5e\xf1\x36\x95\x46\x86\x8a\x7f\x3a\x45\xa9\x67\x68\xd4\x0f\xd9\xd0\x34\x12\xc0\x91\xc6\x31\x5c\xf4\xfd\xe7\xcb\x68\x60\x69\x37\x38\x0d\xb2\xea\xaa\x70\x7b\x4c\x41\x85\xc3\x2e\xdd\xcd\xd3\x06\x70\x5e\x4d\xc1\xff\xc8\x72\xee\xee\x47\x5a\x64\xdf\xac\x86\xab\xa4\x1c\x06\x18\x98\x3f\x87\x41\xc5\xef\x68\xd3\xa1\x01\xe8\xa3\xb8\xca\xc6\x0c\x90\x5c\x15\xfc\x91\x08\x40\xb9\x4c\x00\xa0\xb9\xd0"},
 };
-
-static const unsigned char non_canonical_p[32] = {
-    0xf6, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f
-};
-
-static void add_l(unsigned char * const S)
-{
-    static const unsigned char l[32] =
-      { 0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
-        0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10 };
-
-    sodium_add(S, l, sizeof l);
-}
 
 
 
 // Test vector according to : "Taming the many EdDSAs" white paper
-static const  char edge_cases_signatures[12][3][500]= 
+#define EDGE_CASES_SIZE 12
+static const  char edge_cases_signatures[EDGE_CASES_SIZE][3][500]= 
 {
 {"8c93255d71dcab10e8f379c26200f3c7bd5f09d9bc3068d3ef4edeb4853022b6" ,
 "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
@@ -1100,558 +1095,305 @@ static const  char edge_cases_signatures[12][3][500]=
 "a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"}
 };
 
-// we desinged the verification to fit the white paper results on the above vectors.
-// the only defernce is that we reject small order R (becuase our previous version done that)
-static const int edge_cases_results[] = {-1,-1,-1,0,0,0,-1,-1,-1,-1,-1,-1};
 
 
-//checking for non canoical R
-static const  char non_canoical_R[][3][500]= 
+static int test_data_expected_results[SAMPLE_SIZE];
+
+static int edge_cases_expected_results[EDGE_CASES_SIZE] = {0,0,0,1,1,1,0,0,0,0,0,0};
+
+void check_valid_array(const int* is_valid_array, const int size, const int * expected_result)
 {
-{"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "010000000000000000000000000000000000000000000000000000000000008087909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-{"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-{"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-{"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-{"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-{"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-};
+    for (int i=0; i<size; ++i)
+    {
+        if (is_valid_array[i] != expected_result[i])
+        {
+            printf("result not as expected! expected: %d, got: %d", expected_result[i] ,is_valid_array[i]);
+        }
+    }
+}
 
-
-
-
-static const  char non_canoical_R_greater_than_field_element[][3][500]= 
+void ed25519_randombytes_unsafe (void *p, size_t len) 
 {
-{"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f2ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f4ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f5ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f6ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f8ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "f9ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "faffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "fcffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-  {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-  {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "feffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
-   {"9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79",
- "cdb267ce40c5cd45306fa5d2f29731459387dbf9eb933b7bd5aed9a765b88d4d",
- "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff87909e14428a7a1d62e9f22f3d3ad7802db02eb2e688b6c52fcd6648a98bd009"} ,
- 
-};
+    rand_func_iml(p,len);
+}
 
 
-//checking for non canoical A
-static const  char non_canoical_public_key[][3][500]= 
+void ed25519_only_ones (void *p, size_t len) 
 {
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "0100000000000000000000000000000000000000000000000000000000000080", // (-0,1)
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // (-0,-1)
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f", // (0,2^252-18)
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // (-0,2^252-18)
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // (-1sqrt(-1),2^252-19)
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f", // (sqrt(-1),2^252-19)
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-};
+    memset(p,1,len);
+}
 
 
+static size_t m_len_array[SAMPLE_SIZE];
 
-//checking for non canoical A
-static const  char non_canoical_public_key_greater_than_field_element[][3][500]= 
+void test_mixed_subgroup_signatures()
 {
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+1
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+2
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+3
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+4
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f2ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+5
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+6
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f4ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+7
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f5ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+8
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f6ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+9
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+10
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f8ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+11
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "f9ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+12
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "faffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+13
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "fbffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+14
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "fcffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+15
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+16
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "feffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+17
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-{"9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41",
- "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", // 2^252-19+18
-"a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04"} ,
-};
+    unsigned char * messages[MINIMAL_BATCH_SIZE];
+    unsigned char * pk_set[MINIMAL_BATCH_SIZE];
+    unsigned char * sign_set[MINIMAL_BATCH_SIZE];
+    size_t m_len_array[MINIMAL_BATCH_SIZE];
+    int valid [MINIMAL_BATCH_SIZE];
+
+    unsigned char * pk_data[MINIMAL_BATCH_SIZE][crypto_sign_PUBLICKEYBYTES];
+    unsigned char * sign_data[MINIMAL_BATCH_SIZE][crypto_sign_BYTES];
+    unsigned char * message_data[MINIMAL_BATCH_SIZE][crypto_sign_PUBLICKEYBYTES];
+
+    printf("-----  mixed subgroup test\n");
+    rand_func_iml = &ed25519_only_ones;
+    
+    // Test case number 4 is a signature that is validated only in the cofactored version
+    sodium_hex2bin(&pk_data[0][0], crypto_sign_PUBLICKEYBYTES,
+            edge_cases_signatures[4][1],
+            crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
+
+    sodium_hex2bin(&sign_data[0][0], crypto_sign_BYTES,
+            edge_cases_signatures[4][2],
+            crypto_sign_BYTES * 2, NULL, NULL, NULL); 
+
+    sodium_hex2bin(&message_data[0][0], crypto_sign_PUBLICKEYBYTES,
+            edge_cases_signatures[4][0],
+            crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
 
 
-int test_edge_case_signature(const char * pk_in,  const char * sig_in)
-{
-    unsigned char pk[crypto_sign_PUBLICKEYBYTES];
-    unsigned char sig[crypto_sign_BYTES];
+    pk_set[0] = &pk_data[0][0];
+    sign_set[0] = &sign_data[0][0];
+    messages[0] = &message_data[0][0];
+    m_len_array[0] = 32;
 
+    for (int i = 1; i < MINIMAL_BATCH_SIZE; i++) 
+    {
+        messages[i] = test_data[i].m;
+        pk_set[i] = test_data[i].pk;
+        sign_set[i] = test_data[i].sig;
+        m_len_array[i] = i;
+    }
 
-    sodium_hex2bin(pk, crypto_sign_PUBLICKEYBYTES,
-                pk_in,
-                crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
-    sodium_hex2bin(sig, crypto_sign_BYTES,
-                sig_in,
-                crypto_sign_BYTES * 2, NULL, NULL, NULL);              
-
-   
-    return validate_ed25519_pk_and_sig(sig, pk);
+    int res = crypto_sign_ed25519_open_batch(messages, m_len_array, pk_set, sign_set ,MINIMAL_BATCH_SIZE, valid);
+    if (res != 0)
+    {
+        printf("batch verification failed\n");
+    }
+    check_valid_array(valid, MINIMAL_BATCH_SIZE, test_data_expected_results);
 }
 
 
 void test_edge_cases()
 {
-    unsigned char pk[crypto_sign_PUBLICKEYBYTES];
-    unsigned char sig[crypto_sign_BYTES];
-    unsigned char msg[crypto_sign_BYTES];
+    unsigned char * messages[EDGE_CASES_SIZE];
+    unsigned char * pk_set[EDGE_CASES_SIZE];
+    unsigned char * sign_set[EDGE_CASES_SIZE];
+    size_t m_len_array[EDGE_CASES_SIZE];
+    int valid [EDGE_CASES_SIZE];
 
-    
+    unsigned char * pk_data[EDGE_CASES_SIZE][crypto_sign_PUBLICKEYBYTES];
+    unsigned char * sign_data[EDGE_CASES_SIZE][crypto_sign_BYTES];
+    unsigned char * message_data[EDGE_CASES_SIZE][crypto_sign_PUBLICKEYBYTES];
 
 
-    printf("---- testing: white paper edge cases\n");
-    printf("\t expecting the following result: \n");
-    for (int i=0; i<(sizeof edge_cases_signatures) / (sizeof edge_cases_signatures[0]) ;i++)
+    printf("-----  edge cases test\n");
+    rand_func_iml = &randombytes_buf;
+
+
+    for (int i = 0; i < EDGE_CASES_SIZE; i++) 
     {
-        printf("%d |",edge_cases_results[i]);
-    }
-    printf("\n");
 
-    for (int i=0; i<(sizeof edge_cases_signatures) / (sizeof edge_cases_signatures[0]) ;i++)
-    {
-
-        sodium_hex2bin(pk, crypto_sign_PUBLICKEYBYTES,
+        sodium_hex2bin(&pk_data[i][0], crypto_sign_PUBLICKEYBYTES,
                 edge_cases_signatures[i][1],
                 crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
-        sodium_hex2bin(sig, crypto_sign_BYTES,
+
+        sodium_hex2bin(&sign_data[i][0], crypto_sign_BYTES,
                 edge_cases_signatures[i][2],
-                crypto_sign_BYTES * 2, NULL, NULL, NULL);  
-        
+                crypto_sign_BYTES * 2, NULL, NULL, NULL); 
 
-        sodium_hex2bin(msg, crypto_sign_BYTES,
+        sodium_hex2bin(&message_data[i][0], crypto_sign_PUBLICKEYBYTES,
                 edge_cases_signatures[i][0],
-                crypto_sign_BYTES * 2, NULL, NULL, NULL);  
-                
-        if ((crypto_sign_ed25519_verify_detached(sig,
-                                                msg,
-                                                crypto_sign_PUBLICKEYBYTES,
-                                                pk)) != edge_cases_results[i])    
-        {
-            printf("sig num : %i doesn't match expected reuslt\n",i); 
-            printf("test failed!\n");          
-        }
+                crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
 
+        pk_set[i] = &pk_data[i][0];
+        sign_set[i] = &sign_data[i][0];
+        messages[i] = &message_data[i][0];
+        m_len_array[i] = 32;
     }
-    printf("success\n");        
+
+	int res = crypto_sign_ed25519_open_batch(messages, m_len_array, pk_set, sign_set ,EDGE_CASES_SIZE, valid);
+    if (res == 0)
+    {
+        printf("batch passed - should have failed!");
+    }
+    check_valid_array(valid, EDGE_CASES_SIZE, edge_cases_expected_results);
 }
 
-void test_inputs()
+
+void bos_carter_edge_case_random_scalars(void *p, size_t len)
 {
+    static const uint8_t scalars_array[] = {
+        0x56, 0xd8, 0xb2, 0x99, 0xf3, 0xe6, 0x25, 0x4c, 0xf8, 0x9c, 0x72, 0x21, 0x0, 0xaa, 0x2, 0x1, 
+        0xda, 0x4, 0xb, 0x1b, 0x2c, 0x5e, 0x88, 0xbb, 0xca, 0x7, 0x68, 0xf0, 0x3f, 0xd5, 0x5b, 0x7e, 
+        0xbc, 0xee, 0x45, 0xfb, 0x21, 0x80, 0x13, 0x75, 0xc8, 0xb9, 0x84, 0xe0, 0x9f, 0x11, 0xc5, 
+        0xc6, 0x42, 0x31, 0x46, 0x31, 0x9c, 0xa1, 0x4, 0x2c, 0x3d, 0x6, 0xdf, 0x90, 0x4c, 0x64, 
+        0x6d, 0xf1, 0x84, 0x29, 0x4c, 0x94, 0xdb, 0x52, 0x33, 0x70, 0xb2, 0xc9, 0x1d, 0x82, 0xf8, 
+        0xf8, 0x49, 0x7c, 0x9a, 0x96, 0xb0, 0x37, 0x66, 0x64, 0xaa, 0x8e, 0xe4, 0xd7, 0xfb, 0xc,
+        0x78, 0x3c, 0x1, 0xc3, 0xbe, 0x9e, 0xd7, 0xa2, 0xa2, 0xeb, 0x87, 0x21, 0xfd, 0x17, 0xfc, 
+        0x8e, 0x43, 0xf1, 0xec, 0xe4, 0xca, 0x3b, 0x93, 0xc4, 0x32, 0x8f, 0xf7, 0xde, 0x30, 0x52, 
+        0xa1, 0xb6, 0x38, 0x6a, 0x7e, 0xa7,
+    };
+    memcpy(p,scalars_array,len);
+}
+
+
+void test_bos_carter_edge_case()
+{
+    unsigned char * messages[SAMPLE_SIZE];
+    unsigned char * pk_set[SAMPLE_SIZE];
+    unsigned char * sign_set[SAMPLE_SIZE];
+    size_t m_len_array[SAMPLE_SIZE];
+    int valid [SAMPLE_SIZE];
+
+
+    printf("----- bosecarter edge case test\n");
+    rand_func_iml = &bos_carter_edge_case_random_scalars;
+
+    for (int i = 0; i < 8; i++) 
+    {
+        messages[i] = test_data[i].m;
+        pk_set[i] = test_data[i].pk;
+        sign_set[i] = test_data[i].sig;
+        m_len_array[i] = i;
+    }
     
-    printf("---- testing: non canonical public key  - all should be rejected\n");
-    for (int i=0; i<(sizeof non_canoical_public_key) / (sizeof non_canoical_public_key[0]) ;i++)
+	int res = crypto_sign_ed25519_open_batch(messages, m_len_array, pk_set, sign_set ,8, valid);
+    if (res != 0)
     {
-        if (test_edge_case_signature(non_canoical_public_key[i][1],
-                                    non_canoical_public_key[i][2]) != -1)    
-        {
-            printf("input for sig num : %i accepted \n", i);
-            printf("test failed\n");
-            
-        }
+        printf("batch failed!");
     }
-    printf("success\n");        
-
-    printf("---- testing: non canonical public key greater than field element - all should be rejected\n");
-    for (int i=0; i<(sizeof non_canoical_public_key_greater_than_field_element) / (sizeof non_canoical_public_key_greater_than_field_element[0]) ;i++)
-    {
-        if (test_edge_case_signature(non_canoical_public_key_greater_than_field_element[i][1],
-                                    non_canoical_public_key_greater_than_field_element[i][2]) != -1)    
-        {
-            printf("input for sig num : %i accepted \n", i);
-            printf("test failed\n");
-            
-        }
-    }
-    printf("success\n");        
-
-    printf("---- testing: non canonical R - all should be rejected\n");
-    for (int i=0; i<(sizeof non_canoical_R) / (sizeof non_canoical_R[0]) ;i++)
-    {
-        if (test_edge_case_signature(non_canoical_R[i][1],
-                                    non_canoical_R[i][2]) != -1)    
-        {
-            printf("input for sig num : %i accepted \n", i);
-            printf("test failed\n");
-                     
-        }
-    }
-    printf("success\n");        
-
-    printf("---- testing: non canonical greater than field element R -  all should be rejected\n");
-    for (int i=0; i<(sizeof non_canoical_R_greater_than_field_element) / (sizeof non_canoical_R_greater_than_field_element[0]) ;i++)
-    {
-        if (test_edge_case_signature(non_canoical_R_greater_than_field_element[i][1],
-                                    non_canoical_R_greater_than_field_element[i][2]) != -1)    
-        {
-            printf("input for sig num : %i accepted \n", i);
-            printf("test failed\n");
-        }
-    }
-    printf("success\n");        
+    check_valid_array(valid, 8, test_data_expected_results);
+  
 }
 
-int main(void)
+
+
+void test_invalid_signatures_outside_batch()
 {
-    crypto_sign_state  st;
-    unsigned char      extracted_seed[crypto_sign_ed25519_SEEDBYTES];
-    unsigned char      extracted_pk[crypto_sign_ed25519_PUBLICKEYBYTES];
-    unsigned char      sig[crypto_sign_BYTES];
-    unsigned char      sm[1024 + crypto_sign_BYTES];
-    unsigned char      m[1024];
-    unsigned char      skpk[crypto_sign_SECRETKEYBYTES];
-    unsigned char      pk[crypto_sign_PUBLICKEYBYTES];
-    unsigned char      sk[crypto_sign_SECRETKEYBYTES];
-    char               sig_hex[crypto_sign_BYTES * 2 + 1];
-    char               pk_hex[crypto_sign_PUBLICKEYBYTES * 2 + 1];
-    char               sk_hex[crypto_sign_SECRETKEYBYTES * 2 + 1];
-    unsigned long long siglen;
-    unsigned long long smlen;
-    unsigned long long mlen;
-    unsigned int       i;
-    unsigned int       j;
+    unsigned char * messages[MAX_BATCH_SIZE+1];
+    unsigned char * pk_set[MAX_BATCH_SIZE+1];
+    unsigned char * sign_set[MAX_BATCH_SIZE+1];
+    size_t m_len_array[MAX_BATCH_SIZE+1];
+    int valid [MAX_BATCH_SIZE+1];
 
-    memset(sig, 0, sizeof sig);
-    for (i = 0U; i < (sizeof test_data) / (sizeof test_data[0]); i++) {
-#ifdef BROWSER_TESTS
-        if (i % 128U != 127U) {
-            continue;
-        }
-#endif
-        memcpy(skpk, test_data[i].sk, crypto_sign_SEEDBYTES);
-        memcpy(skpk + crypto_sign_SEEDBYTES, test_data[i].pk,
-               crypto_sign_PUBLICKEYBYTES);
-        if (crypto_sign(sm, &smlen, (const unsigned char *)test_data[i].m, i,
-                        skpk) != 0) {
-            printf("crypto_sign() failure: [%u]\n", i);
-            continue;
-        }
-        if (memcmp(test_data[i].sig, sm, crypto_sign_BYTES) != 0) {
-            printf("signature failure: [%u]\n", i);
-            continue;
-        }
-        if (crypto_sign_open(m, NULL, sm, smlen, test_data[i].pk) != 0) {
-            printf("crypto_sign_open() failure: [%u]\n", i);
-            continue;
-        }
-        add_l(sm + 32);
-#ifndef ED25519_COMPAT
-        if (crypto_sign_open(m, &mlen, sm, smlen, test_data[i].pk) != -1) {
-            printf("crypto_sign_open(): signature [%u] is malleable\n", i);
-            continue;
-        }
-#else
-        if (crypto_sign_open(m, &mlen, sm, smlen, test_data[i].pk) != 0) {
-            printf("crypto_sign_open(): signature [%u] is not malleable\n", i);
-            continue;
-        }
-#endif
-        if (memcmp(test_data[i].m, m, (size_t)mlen) != 0) {
-            printf("message verification failure: [%u]\n", i);
-            continue;
-        }
-        sm[i + crypto_sign_BYTES - 1U]++;
-        if (crypto_sign_open(m, &mlen, sm, smlen, test_data[i].pk) == 0) {
-            printf("message can be forged: [%u]\n", i);
-            continue;
-        }
-        if (crypto_sign_open(m, &mlen, sm, i % crypto_sign_BYTES,
-                             test_data[i].pk) == 0) {
-            printf("short signed message verifies: [%u]\n",
-                   i % crypto_sign_BYTES);
-            continue;
-        }
-        if (crypto_sign_detached(sig, &siglen,
-                                 (const unsigned char *)test_data[i].m, i, skpk)
-            != 0) {
-            printf("detached signature failed: [%u]\n", i);
-            continue;
-        }
-        if (siglen == 0U || siglen > crypto_sign_BYTES) {
-            printf("detached signature has an unexpected length: [%u]\n", i);
-            continue;
-        }
-        if (memcmp(test_data[i].sig, sig, crypto_sign_BYTES) != 0) {
-            printf("detached signature failure: [%u]\n", i);
-            continue;
-        }
-        if (crypto_sign_verify_detached(sig,
-                                        (const unsigned char *)test_data[i].m,
-                                        i, test_data[i].pk) != 0) {
-            printf("detached signature verification failed: [%u]\n", i);
-            continue;
-        }
-    }
-    printf("%u tests\n", i);
+    printf("----- invalid signature outside batch \n");
+    rand_func_iml = &randombytes_buf;
 
-    i--;
-
-    memcpy(sm, test_data[i].m, i);
-    if (crypto_sign(sm, &smlen, sm, i, skpk) != 0) {
-        printf("crypto_sign() with overlap failed\n");
-    }
-    if (crypto_sign_open(sm, &mlen, sm, smlen, test_data[i].pk) != 0) {
-        printf("crypto_sign_open() with overlap failed\n");
-    }
-    if (memcmp(test_data[i].m, sm, (size_t)mlen) != 0) {
-        printf("crypto_sign_open() with overlap failed (content)\n");
+    for (int i = 0; i < MAX_BATCH_SIZE+1; i++) 
+    {
+        messages[i] = test_data[i].m;
+        pk_set[i] = test_data[i].pk;
+        sign_set[i] = test_data[i].sig;
+        m_len_array[i] = i;
     }
 
-    for (j = 1U; j < 8U; j++) {
-        sig[63] ^= (j << 5);
-        if (crypto_sign_verify_detached(sig,
-                                        (const unsigned char *)test_data[i].m,
-                                        i, test_data[i].pk) != -1) {
-            printf("detached signature verification should have failed\n");
-            continue;
-        }
-        sig[63] ^= (j << 5);
+    //change first signature
+    sign_set[MAX_BATCH_SIZE][0]++;
+    test_data_expected_results[MAX_BATCH_SIZE]=0;
+
+	int res = crypto_sign_ed25519_open_batch(messages, m_len_array, pk_set, sign_set ,MAX_BATCH_SIZE+1, valid);
+    if (res == 0)
+    {
+        printf("batch passed - should failed!");
+    }
+    check_valid_array(valid, MAX_BATCH_SIZE+1, test_data_expected_results);
+
+    
+    sign_set[MAX_BATCH_SIZE][0]--;
+    test_data_expected_results[MAX_BATCH_SIZE]=1;
+}
+
+
+void test_invalid_signatures_inside_batch()
+{
+    unsigned char * messages[MINIMAL_BATCH_SIZE];
+    unsigned char * pk_set[MINIMAL_BATCH_SIZE];
+    unsigned char * sign_set[MINIMAL_BATCH_SIZE];
+    size_t m_len_array[MINIMAL_BATCH_SIZE];
+    int valid [MINIMAL_BATCH_SIZE];
+
+    printf("----- invalid signature in batch \n");
+    rand_func_iml = &randombytes_buf;
+
+    for (int i = 0; i < MINIMAL_BATCH_SIZE; i++) 
+    {
+        messages[i] = test_data[i].m;
+        pk_set[i] = test_data[i].pk;
+        sign_set[i] = test_data[i].sig;
+        m_len_array[i] = i;
     }
 
-#ifndef ED25519_COMPAT
-    if (crypto_sign_verify_detached(sig,
-                                    (const unsigned char *)test_data[i].m,
-                                    i, non_canonical_p) != -1) {
-        printf("detached signature verification with non-canonical key should have failed\n");
-    }
-#endif
-    memset(pk, 0, sizeof pk);
-    if (crypto_sign_verify_detached(sig,
-                                    (const unsigned char *)test_data[i].m,
-                                    i, pk) != -1) {
-        printf("detached signature verification should have failed\n");
-    }
+    //change first signature
+    sign_set[0][0]++;
+    test_data_expected_results[0]=0;
 
-    memset(sig, 0xff, 32);
-    sig[0] = 0xdb;
-    if (crypto_sign_verify_detached(sig,
-                                    (const unsigned char *)test_data[i].m,
-                                    i, pk) != -1) {
-        printf("detached signature verification should have failed\n");
+	int res = crypto_sign_ed25519_open_batch(messages, m_len_array, pk_set, sign_set ,MINIMAL_BATCH_SIZE, valid);
+    if (res == 0)
+    {
+        printf("batch passed - should failed!");
     }
-    assert(crypto_sign_detached(sig, NULL,
-                                (const unsigned char *)test_data[i].m, i, skpk) == 0);
+    check_valid_array(valid, MINIMAL_BATCH_SIZE, test_data_expected_results);
 
-    sodium_hex2bin(pk, crypto_sign_PUBLICKEYBYTES,
-                   "3eee494fb9eac773144e34b0c755affaf33ea782c0722e5ea8b150e61209ab36",
-                   crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
-    if (crypto_sign_verify_detached(sig,
-                                    (const unsigned char *)test_data[i].m,
-                                    i, pk) != -1) {
-        printf("signature with an invalid public key should have failed\n");
-    }
 
-    sodium_hex2bin(pk, crypto_sign_PUBLICKEYBYTES,
-                   "0200000000000000000000000000000000000000000000000000000000000000",
-                   crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
-    if (crypto_sign_verify_detached(sig,
-                                    (const unsigned char *)test_data[i].m,
-                                    i, pk) != -1) {
-        printf("signature with an invalid public key should have failed\n");
-    }
+    sign_set[0][0]--;
+    test_data_expected_results[0]=1;
 
-    sodium_hex2bin(pk, crypto_sign_PUBLICKEYBYTES,
-                   "0500000000000000000000000000000000000000000000000000000000000000",
-                   crypto_sign_PUBLICKEYBYTES * 2, NULL, NULL, NULL);
-    if (crypto_sign_verify_detached(sig,
-                                    (const unsigned char *)test_data[i].m,
-                                    i, pk) != -1) {
-        printf("signature with an invalid public key should have failed\n");
-    }
+}
 
-    if (crypto_sign_seed_keypair(pk, sk, keypair_seed) != 0) {
-        printf("crypto_sign_seed_keypair() failure\n");
-        return -1;
-    }
-    crypto_sign_init(&st);
-    crypto_sign_update(&st, (const unsigned char *)test_data[i].m, i);
-    crypto_sign_final_create(&st, sig, NULL, sk);
-    sodium_bin2hex(sig_hex, sizeof sig_hex, sig, sizeof sig);
-    printf("ed25519ph sig: [%s]\n", sig_hex);
 
-    crypto_sign_init(&st);
-    crypto_sign_update(&st, (const unsigned char *)test_data[i].m, i);
-    if (crypto_sign_final_verify(&st, sig, pk) != 0) {
-        printf("ed5519ph verification failed\n");
-    }
-    crypto_sign_init(&st);
-    crypto_sign_update(&st, (const unsigned char *)test_data[i].m, 0);
-    crypto_sign_update(&st, (const unsigned char *)test_data[i].m, i / 2);
-    crypto_sign_update(&st, ((const unsigned char *)test_data[i].m) + i / 2,
-                       i - i / 2);
-    if (crypto_sign_final_verify(&st, sig, pk) != 0) {
-        printf("ed5519ph verification failed\n");
-    }
-    sig[0]++;
-    if (crypto_sign_final_verify(&st, sig, pk) != -1) {
-        printf("ed5519ph verification could be forged\n");
-    }
-    sig[0]--;
-    pk[0]++;
-    if (crypto_sign_final_verify(&st, sig, pk) != -1) {
-        printf("ed5519ph verification could be forged\n");
-    }
-    sodium_hex2bin(sk, crypto_sign_SECRETKEYBYTES,
-                   "833fe62409237b9d62ec77587520911e9a759cec1d19755b7da901b96dca3d42",
-                   2 * crypto_sign_SECRETKEYBYTES / 2, NULL, NULL, NULL);
-    sodium_hex2bin(pk, crypto_sign_PUBLICKEYBYTES,
-                   "ec172b93ad5e563bf4932c70e1245034c35467ef2efd4d64ebf819683467e2bf",
-                   2 * crypto_sign_PUBLICKEYBYTES, NULL, NULL, NULL);
-    memcpy(sk + crypto_sign_SECRETKEYBYTES - crypto_sign_PUBLICKEYBYTES,
-           pk, crypto_sign_PUBLICKEYBYTES);
-    crypto_sign_init(&st);
-    crypto_sign_update(&st, (const unsigned char *) "abc", 3);
-    crypto_sign_final_create(&st, sig, &siglen, sk);
-    if (siglen == 0U || siglen > crypto_sign_BYTES) {
-        printf("ed25519ph signature has an unexpected length\n");
-    }
-    sodium_bin2hex(sig_hex, sizeof sig_hex, sig, sizeof sig);
-    printf("ed25519ph tv sig: [%s]\n", sig_hex);
+void sainty_tests()
+{
+    unsigned char * messages[SAMPLE_SIZE];
+    unsigned char * pk_set[SAMPLE_SIZE];
+    unsigned char * sign_set[SAMPLE_SIZE];
+    size_t m_len_array[SAMPLE_SIZE];
+    int valid [SAMPLE_SIZE];
 
-    crypto_sign_init(&st);
-    crypto_sign_update(&st, (const unsigned char *) "abc", 3);
-    if (crypto_sign_final_verify(&st, sig, pk) != 0) {
-        printf("ed25519ph verification failed\n");
-    }
-    if (crypto_sign_keypair(pk, sk) != 0) {
-        printf("crypto_sign_keypair() failure\n");
-    }
-    if (crypto_sign_seed_keypair(pk, sk, keypair_seed) != 0) {
-        printf("crypto_sign_seed_keypair() failure\n");
-        return -1;
-    }
-    crypto_sign_ed25519_sk_to_seed(extracted_seed, sk);
-    if (memcmp(extracted_seed, keypair_seed, crypto_sign_ed25519_SEEDBYTES)
-        != 0) {
-        printf("crypto_sign_ed25519_sk_to_seed() failure\n");
-    }
-    crypto_sign_ed25519_sk_to_pk(extracted_pk, sk);
-    if (memcmp(extracted_pk, pk, crypto_sign_ed25519_PUBLICKEYBYTES) != 0) {
-        printf("crypto_sign_ed25519_sk_to_pk() failure\n");
-    }
-    sodium_bin2hex(pk_hex, sizeof pk_hex, pk, sizeof pk);
-    sodium_bin2hex(sk_hex, sizeof sk_hex, sk, sizeof sk);
 
-    printf("pk: [%s]\n", pk_hex);
-    printf("sk: [%s]\n", sk_hex);
+    printf("----- sainty test 1024 signatures\n");
+    rand_func_iml = &randombytes_buf;
 
-    assert(crypto_sign_bytes() > 0U);
-    assert(crypto_sign_seedbytes() > 0U);
-    assert(crypto_sign_publickeybytes() > 0U);
-    assert(crypto_sign_secretkeybytes() > 0U);
-    assert(crypto_sign_messagebytes_max() > 0U);
-    assert(strcmp(crypto_sign_primitive(), "ed25519") == 0);
-    assert(crypto_sign_bytes() == crypto_sign_ed25519_bytes());
-    assert(crypto_sign_seedbytes() == crypto_sign_ed25519_seedbytes());
-    assert(crypto_sign_messagebytes_max() == crypto_sign_ed25519_messagebytes_max());
-    assert(crypto_sign_publickeybytes()
-           == crypto_sign_ed25519_publickeybytes());
-    assert(crypto_sign_secretkeybytes()
-           == crypto_sign_ed25519_secretkeybytes());
-    assert(crypto_sign_statebytes() == crypto_sign_ed25519ph_statebytes());
+    for (int i = 0; i < SAMPLE_SIZE; i++) 
+    {
+        messages[i] = test_data[i].m;
+        pk_set[i] = test_data[i].pk;
+        sign_set[i] = test_data[i].sig;
+        m_len_array[i] = i;
+    }
+    m_len_array[SAMPLE_SIZE-1]--; // the last signature is 1024 chars long
+	int res = crypto_sign_ed25519_open_batch(messages, m_len_array, pk_set, sign_set ,SAMPLE_SIZE, valid);
+    if (res != 0)
+    {
+        printf("batch failed!");
+    }
+    check_valid_array(valid, SAMPLE_SIZE -1 , test_data_expected_results);
 
-#ifdef ED25519_NONDETERMINISTIC
-    exit(0);
-#endif
+	printf("----- sainty test 1025 signatures\n");
+	res = crypto_sign_ed25519_open_batch(messages, m_len_array, pk_set, sign_set ,SAMPLE_SIZE, valid);
+    if (res != 0)
+    {
+        printf("batch failed!");
+    }
+    check_valid_array(valid, SAMPLE_SIZE , test_data_expected_results);
+}
 
-    test_inputs();
+int main()
+{
+    for (int i=0; i<SAMPLE_SIZE; i++)
+    {
+        test_data_expected_results[i] = 1;
+    }
+    sainty_tests();
+    test_invalid_signatures_inside_batch();
+    test_invalid_signatures_outside_batch();
+    test_bos_carter_edge_case();
     test_edge_cases();
-    return 0;
+    test_mixed_subgroup_signatures(); 
+    
+
+	return 0;
 }
