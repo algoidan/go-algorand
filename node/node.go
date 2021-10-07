@@ -19,7 +19,6 @@ package node
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -795,7 +794,7 @@ func (node *AlgorandFullNode) loadParticipationKeys() error {
 		if err != nil {
 			handle.Close()
 			if err == account.ErrUnsupportedSchema {
-				node.log.Infof("Loaded participation keys from storage: %s %s", part.Address(), info.Name())
+				//node.log.Infof("Loaded participation keys from storage: %s %s", part.Address(), info.Name())
 				node.log.Warnf("loadParticipationKeys: not loading unsupported participation key: %s; renaming to *.old", info.Name())
 				fullname := filepath.Join(genesisDir, info.Name())
 				renamedFileName := filepath.Join(fullname, ".old")
@@ -810,7 +809,7 @@ func (node *AlgorandFullNode) loadParticipationKeys() error {
 			// Tell the AccountManager about the Participation (dupes don't matter)
 			added := node.accountManager.AddParticipation(part)
 			if added {
-				node.log.Infof("Loaded participation keys from storage: %s %s", part.Address(), info.Name())
+				//node.log.Infof("Loaded participation keys from storage: %s %s", part.Address(), info.Name())
 			} else {
 				part.Close()
 			}
@@ -1087,7 +1086,7 @@ func (vb validatedBlock) Block() bookkeeping.Block {
 func (node *AlgorandFullNode) AssembleBlock(round basics.Round, deadline time.Time) (agreement.ValidatedBlock, error) {
 	lvb, err := node.transactionPool.AssembleBlock(round, deadline)
 	if err != nil {
-		if errors.Is(err, pools.ErrStaleBlockAssemblyRequest) {
+		if err == pools.ErrStaleBlockAssemblyRequest {
 			// convert specific error to one that would have special handling in the agreement code.
 			err = agreement.ErrAssembleBlockRoundStale
 
@@ -1109,10 +1108,10 @@ func (node *AlgorandFullNode) AssembleBlock(round basics.Round, deadline time.Ti
 
 // VotingKeys implements the key manager's VotingKeys method, and provides additional validation with the ledger.
 // that allows us to load multiple overlapping keys for the same account, and filter these per-round basis.
-func (node *AlgorandFullNode) VotingKeys(votingRound, keysRound basics.Round) []account.Participation {
+func (node *AlgorandFullNode) VotingKeys(votingRound, keysRound basics.Round) []account.ParticipationInRound {
 	keys := node.accountManager.Keys(votingRound)
 
-	participations := make([]account.Participation, 0, len(keys))
+	participations := make([]account.ParticipationInRound, 0, len(keys))
 	accountsData := make(map[basics.Address]basics.AccountData, len(keys))
 	matchingAccountsKeys := make(map[basics.Address]bool)
 	mismatchingAccountsKeys := make(map[basics.Address]int)

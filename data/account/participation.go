@@ -17,10 +17,6 @@
 package account
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-
 	"github.com/algorand/go-algorand/config"
 	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/crypto/merklekeystore"
@@ -28,8 +24,33 @@ import (
 	"github.com/algorand/go-algorand/data/transactions"
 	"github.com/algorand/go-algorand/logging"
 	"github.com/algorand/go-algorand/protocol"
-	"github.com/algorand/go-algorand/util/db"
 )
+
+type RoundSecrets struct {
+	VRF    *crypto.VRFSecrets
+	Voting *crypto.OneTimeSignatureSecrets
+	// BlockProof is used to sign compact certificates. might be nil
+	BlockProof *merklekeystore.Signer
+}
+
+type ParticipationSecrets struct {
+	VRF    *crypto.VRFSecrets
+	Voting *crypto.OneTimeSignatureSecrets
+	// BlockProof is used to sign compact certificates. might be nil
+	BlockProof *merklekeystore.Signer
+}
+
+type ParticipationDetails struct {
+	Parent basics.Address
+
+	// The first and last rounds for which this account is valid, respectively.
+	//
+	// When lastValid has concluded, this set of secrets is destroyed.
+	FirstValid basics.Round
+	LastValid  basics.Round
+
+	KeyDilution uint64
+}
 
 // A Participation encapsulates a set of secrets which allows a root to
 // participate in consensus. All such accounts are associated with a parent root
@@ -42,44 +63,40 @@ import (
 // For correctness, all Roots should have no more than one Participation
 // globally active at any time. If this condition is violated, the Root may
 // equivocate. (Algorand tolerates a limited fraction of misbehaving accounts.)
+type ParticipationWithSecrets struct {
+	ParticipationDetails
+	ParticipationSecrets
+}
+
+type ParticipationInRound struct {
+	ParticipationDetails
+	RoundSecrets
+}
+
+type SecretsId struct {
+	VoteID       crypto.OneTimeSignatureVerifier
+	SelectionID  crypto.VRFVerifier
+	BlockProofID merklekeystore.Verifier
+}
+
 type Participation struct {
-	Parent basics.Address
-
-	VRF    *crypto.VRFSecrets
-	Voting *crypto.OneTimeSignatureSecrets
-	// BlockProof is used to sign compact certificates. might be nil
-	BlockProof *merklekeystore.Signer
-
-	// The first and last rounds for which this account is valid, respectively.
-	//
-	// When lastValid has concluded, this set of secrets is destroyed.
-	FirstValid basics.Round
-	LastValid  basics.Round
-
-	KeyDilution uint64
+	ParticipationDetails
+	SecretsId
 }
 
-// PersistedParticipation encapsulates the static state of the participation
-// for a single address at any given moment, while providing the ability
-// to handle persistence and deletion of secrets.
-type PersistedParticipation struct {
-	Participation
-
-	Store db.Accessor
-}
 
 // ValidInterval returns the first and last rounds for which this participation account is valid.
-func (part Participation) ValidInterval() (first, last basics.Round) {
+func (part  ParticipationDetails) ValidInterval() (first, last basics.Round) {
 	return part.FirstValid, part.LastValid
 }
 
 // Address returns the root account under which this participation account is registered.
-func (part Participation) Address() basics.Address {
+func (part ParticipationDetails) Address() basics.Address {
 	return part.Parent
 }
 
 // OverlapsInterval returns true if the partkey is valid at all within the range of rounds (inclusive)
-func (part Participation) OverlapsInterval(first, last basics.Round) bool {
+func (part ParticipationDetails) OverlapsInterval(first, last basics.Round) bool {
 	if last < first {
 		logging.Base().Panicf("Round interval should be ordered (first = %v, last = %v)", first, last)
 	}
@@ -90,18 +107,18 @@ func (part Participation) OverlapsInterval(first, last basics.Round) bool {
 }
 
 // VRFSecrets returns the VRF secrets associated with this Participation account.
-func (part Participation) VRFSecrets() *crypto.VRFSecrets {
+func (part ParticipationInRound) VRFSecrets() *crypto.VRFSecrets {
 	return part.VRF
 }
 
 // VotingSecrets returns the voting secrets associated with this Participation account.
-func (part Participation) VotingSecrets() *crypto.OneTimeSignatureSecrets {
+func (part ParticipationWithSecrets) VotingSecrets() *crypto.OneTimeSignatureSecrets {
 	return part.Voting
 }
 
 // VotingSigner returns the voting secrets associated with this Participation account,
 // together with the KeyDilution value.
-func (part Participation) VotingSigner() crypto.OneTimeSigner {
+func (part ParticipationInRound) VotingSigner() crypto.OneTimeSigner {
 	return crypto.OneTimeSigner{
 		OneTimeSignatureSecrets: part.Voting,
 		OptionalKeyDilution:     part.KeyDilution,
@@ -110,7 +127,7 @@ func (part Participation) VotingSigner() crypto.OneTimeSigner {
 
 // BlockProofSigner returns the key used to sign on Compact Certificates.
 // might return nil!
-func (part Participation) BlockProofSigner() *merklekeystore.Signer {
+func (part ParticipationWithSecrets) BlockProofSigner() *merklekeystore.Signer {
 	return part.BlockProof
 }
 
@@ -126,142 +143,17 @@ func (part Participation) GenerateRegistrationTransaction(fee basics.MicroAlgos,
 			Lease:      leaseBytes,
 		},
 		KeyregTxnFields: transactions.KeyregTxnFields{
-			VotePK:      part.Voting.OneTimeSignatureVerifier,
-			SelectionPK: part.VRF.PK,
+			VotePK:      part.VoteID,
+			SelectionPK: part.SelectionID,
 		},
 	}
-	if cert := part.BlockProofSigner(); cert != nil {
-		if cparams.EnableBlockProofKeyregCheck {
-			t.KeyregTxnFields.BlockProofPK = *(cert.GetVerifier())
-		}
-	}
+	//if cert := part.BlockProofID; cert != nil {
+	//	if cparams.EnableBlockProofKeyregCheck {
+	//		t.KeyregTxnFields.BlockProofPK = *(cert.GetVerifier())
+	//	}
+	//}
 	t.KeyregTxnFields.VoteFirst = part.FirstValid
 	t.KeyregTxnFields.VoteLast = part.LastValid
 	t.KeyregTxnFields.VoteKeyDilution = part.KeyDilution
 	return t
-}
-
-// DeleteOldKeys securely deletes ephemeral keys for rounds strictly older than the given round.
-func (part PersistedParticipation) DeleteOldKeys(current basics.Round, proto config.ConsensusParams) <-chan error {
-	keyDilution := part.KeyDilution
-	if keyDilution == 0 {
-		keyDilution = proto.DefaultKeyDilution
-	}
-
-	part.Voting.DeleteBeforeFineGrained(basics.OneTimeIDForRound(current, keyDilution), keyDilution)
-
-	errorCh := make(chan error, 1)
-	deleteOldKeys := func(encodedVotingSecrets []byte) {
-		errorCh <- part.Store.Atomic(func(ctx context.Context, tx *sql.Tx) error {
-			_, err := tx.Exec("UPDATE ParticipationAccount SET voting=?", encodedVotingSecrets)
-			if err != nil {
-				return fmt.Errorf("Participation.DeleteOldKeys: failed to update account: %v", err)
-			}
-			return nil
-		})
-		close(errorCh)
-	}
-	voting := part.Voting.Snapshot()
-	encodedVotingSecrets := protocol.Encode(&voting)
-	go deleteOldKeys(encodedVotingSecrets)
-	return errorCh
-}
-
-// PersistNewParent writes a new parent address to the partkey database.
-func (part PersistedParticipation) PersistNewParent() error {
-	return part.Store.Atomic(func(ctx context.Context, tx *sql.Tx) error {
-		_, err := tx.Exec("UPDATE ParticipationAccount SET parent=?", part.Parent[:])
-		return err
-	})
-}
-
-// FillDBWithParticipationKeys initializes the passed database with participation keys
-func FillDBWithParticipationKeys(store db.Accessor, address basics.Address, firstValid, lastValid basics.Round, keyDilution uint64) (part PersistedParticipation, err error) {
-	if lastValid < firstValid {
-		err = fmt.Errorf("FillDBWithParticipationKeys: lastValid %d is after firstValid %d", lastValid, firstValid)
-		return
-	}
-
-	// Compute how many distinct participation keys we should generate
-	firstID := basics.OneTimeIDForRound(firstValid, keyDilution)
-	lastID := basics.OneTimeIDForRound(lastValid, keyDilution)
-	numBatches := lastID.Batch - firstID.Batch + 1
-
-	// Generate them
-	v := crypto.GenerateOneTimeSignatureSecrets(firstID.Batch, numBatches)
-
-	// Generate a new VRF key, which lives in the participation keys db
-	vrf := crypto.GenerateVRFSecrets()
-
-	// TODO change this
-	compactCertRound := config.Consensus[protocol.ConsensusFuture].CompactCertRounds
-
-	// Generate a new key which signs the compact certificates
-	blockProof, err := merklekeystore.New(uint64(firstValid), uint64(lastValid), compactCertRound, crypto.DilithiumType, store)
-	if err != nil {
-		return PersistedParticipation{}, err
-	}
-
-	// Construct the Participation containing these keys to be persisted
-	part = PersistedParticipation{
-		Participation: Participation{
-			Parent:      address,
-			VRF:         vrf,
-			Voting:      v,
-			BlockProof:  blockProof,
-			FirstValid:  firstValid,
-			LastValid:   lastValid,
-			KeyDilution: keyDilution,
-		},
-		Store: store,
-	}
-	// Persist the Participation into the database
-	err = part.Persist()
-	if err != nil {
-		return PersistedParticipation{}, err
-	}
-
-	err = blockProof.Persist() // must be called after part.Persist() !
-
-	return part, err
-}
-
-// Persist writes a Participation out to a database on the disk
-func (part PersistedParticipation) Persist() error {
-	rawVRF := protocol.Encode(part.VRF)
-	voting := part.Voting.Snapshot()
-	rawVoting := protocol.Encode(&voting)
-	rawbBlockProof := protocol.Encode(part.BlockProof)
-
-	err := part.Store.Atomic(func(ctx context.Context, tx *sql.Tx) error {
-		err := partInstallDatabase(tx)
-		if err != nil {
-			return fmt.Errorf("failed to install database: %w", err)
-		}
-
-		_, err = tx.Exec("INSERT INTO ParticipationAccount (parent, vrf, voting, blockProof, firstValid, lastValid, keyDilution) VALUES (?, ?, ?, ?, ?, ?,?)",
-			part.Parent[:], rawVRF, rawVoting, rawbBlockProof, part.FirstValid, part.LastValid, part.KeyDilution)
-		if err != nil {
-			return fmt.Errorf("failed to insert account: %w", err)
-		}
-		return nil
-	})
-
-	if err != nil {
-		err = fmt.Errorf("PersistedParticipation.Persist: %w", err)
-	}
-	return err
-}
-
-// Migrate is called when loading participation keys.
-// Calls through to the migration helper and returns the result.
-func Migrate(partDB db.Accessor) error {
-	return partDB.Atomic(func(ctx context.Context, tx *sql.Tx) error {
-		return partMigrate(tx)
-	})
-}
-
-// Close closes the underlying database handle.
-func (part PersistedParticipation) Close() {
-	part.Store.Close()
 }

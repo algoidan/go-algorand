@@ -81,7 +81,7 @@ var partGenerateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		printPartkey(partkey.Participation)
+		printPartkey(partkey.GetParticipationData())
 	},
 }
 
@@ -103,7 +103,7 @@ var partInfoCmd = &cobra.Command{
 		}
 		partkey.Close()
 
-		printPartkey(partkey.Participation)
+		printPartkey(partkey.GetParticipationData())
 	},
 }
 
@@ -131,26 +131,28 @@ var partReparentCmd = &cobra.Command{
 		}
 		defer partkey.Close()
 
-		partkey.Parent = parent
+		partData := partkey.GetParticipationData()
+		partData.Parent = parent
+		// TODO CHECK!!!
 		err = partkey.PersistNewParent()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Cannot persist partkey database %s: %v\n", partKeyfile, err)
 			os.Exit(1)
 		}
 
-		printPartkey(partkey.Participation)
+		printPartkey(partData)
 	},
 }
 
 func printPartkey(partkey account.Participation) {
 	fmt.Printf("Parent address:    %s\n", partkey.Parent.String())
-	fmt.Printf("VRF public key:    %s\n", base64.StdEncoding.EncodeToString(partkey.VRF.PK[:]))
-	fmt.Printf("Voting public key: %s\n", base64.StdEncoding.EncodeToString(partkey.Voting.OneTimeSignatureVerifier[:]))
+	fmt.Printf("VRF public key:    %s\n", base64.StdEncoding.EncodeToString(partkey.SelectionID[:]))
+	fmt.Printf("Voting public key: %s\n", base64.StdEncoding.EncodeToString(partkey.VoteID[:]))
 	fmt.Printf("First round:       %d\n", partkey.FirstValid)
 	fmt.Printf("Last round:        %d\n", partkey.LastValid)
 	fmt.Printf("Key dilution:      %d\n", partkey.KeyDilution)
-	fmt.Printf("First batch:       %d\n", partkey.Voting.FirstBatch)
-	fmt.Printf("First offset:      %d\n", partkey.Voting.FirstOffset)
+	//fmt.Printf("First batch:       %d\n", partkey.Voting.FirstBatch)
+	//fmt.Printf("First offset:      %d\n", partkey.Voting.FirstOffset)
 }
 
 func init() {

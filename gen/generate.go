@@ -261,14 +261,15 @@ func generateGenesisFiles(outDir string, protoVersion protocol.ConsensusVersion,
 			var data basics.AccountData
 			data.Status = wallet.Online
 			data.MicroAlgos.Raw = wallet.Stake
+			partData := part.GetParticipationData()
 			if wallet.Online == basics.Online {
-				data.VoteID = part.VotingSecrets().OneTimeSignatureVerifier
-				data.SelectionID = part.VRFSecrets().PK
-				data.VoteFirstValid = part.FirstValid
-				data.VoteLastValid = part.LastValid
-				data.VoteKeyDilution = part.KeyDilution
+				data.VoteID = partData.VoteID
+				data.SelectionID = partData.SelectionID
+				data.VoteFirstValid = partData.FirstValid
+				data.VoteLastValid = partData.LastValid
+				data.VoteKeyDilution = partData.KeyDilution
 				if config.Consensus[protocol.ConsensusFuture].EnableBlockProofKeyregCheck {
-					data.BlockProofID = *part.BlockProofSigner().GetVerifier()
+					data.BlockProofID = partData.BlockProofID
 				}
 			}
 

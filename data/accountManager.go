@@ -67,13 +67,13 @@ func MakeAccountManager(log logging.Logger) *AccountManager {
 }
 
 // Keys returns a list of Participation accounts.
-func (manager *AccountManager) Keys(rnd basics.Round) (out []account.Participation) {
+func (manager *AccountManager) Keys(rnd basics.Round) (out []account.ParticipationInRound) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
 	for _, part := range manager.partKeys {
 		if part.OverlapsInterval(rnd, rnd) {
-			out = append(out, part.Participation)
+			out = append(out, part.GetParticipationInRound())
 		}
 	}
 	return out
@@ -107,8 +107,8 @@ func (manager *AccountManager) AddParticipation(participation account.PersistedP
 		Address:     address,
 		FirstValid:  first,
 		LastValid:   last,
-		VoteID:      participation.Voting.OneTimeSignatureVerifier,
-		SelectionID: participation.VRF.PK,
+		//VoteID:      participation.Voting.OneTimeSignatureVerifier,
+		//SelectionID: participation.VRF.PK,
 	}
 
 	// Check if we already have participation keys for this address in this interval

@@ -47,7 +47,7 @@ func (c *Client) chooseParticipation(address basics.Address, round basics.Round)
 	// This lambda will be used for finding the desired file.
 	checkIfFileIsDesiredKey := func(file os.FileInfo, expiresAfter basics.Round) (part account.Participation, err error) {
 		var handle db.Accessor
-		var partCandidate account.PersistedParticipation
+		var persistPartCandidate account.PersistedParticipation
 
 		// If it can't be a participation key database, skip it
 		if !config.IsPartKeyFilename(file.Name()) {
@@ -64,21 +64,22 @@ func (c *Client) chooseParticipation(address basics.Address, round basics.Round)
 		}
 
 		// Fetch an account.Participation from the database
-		partCandidate, err = account.RestoreParticipation(handle)
+		persistPartCandidate, err = account.RestoreParticipation(handle)
 		if err != nil {
 			// Couldn't read it, skip it
 			handle.Close()
 			return
 		}
-		defer partCandidate.Close()
+		defer persistPartCandidate.Close()
 
+		partCandidate := persistPartCandidate.GetParticipationData()
 		// Return the Participation valid for this round that relates to the passed address
 		// that expires farthest in the future.
 		// Note that algod will sign votes with all possible Participations. so any should work
 		// in the short-term.
 		// In the future we should allow the user to specify exactly which partkeys to register.
 		if partCandidate.FirstValid <= round && round <= partCandidate.LastValid && partCandidate.Parent == address && partCandidate.LastValid > expiresAfter {
-			part = partCandidate.Participation
+			part = partCandidate
 		}
 		return
 	}
@@ -168,7 +169,7 @@ func (c *Client) GenParticipationKeysTo(address string, firstValid, lastValid, k
 	if err != nil {
 		return
 	}
-	part = newPart.Participation
+	part = newPart.GetParticipationData()
 	newPart.Close()
 	return part, partKeyPath, err
 }
@@ -203,12 +204,13 @@ func (c *Client) InstallParticipationKeys(inputfile string) (part account.Partic
 		return
 	}
 
-	if partkey.Parent == (basics.Address{}) {
+	partCandidate := partkey.GetParticipationData()
+ 	if partCandidate.Parent == (basics.Address{}) {
 		err = fmt.Errorf("Cannot install partkey with missing (zero) parent address")
 		return
 	}
 
-	newdbpath, err := participationKeysPath(outDir, partkey.Parent, partkey.FirstValid, partkey.LastValid)
+	newdbpath, err := participationKeysPath(outDir, partCandidate.Parent, partCandidate.FirstValid, partCandidate.LastValid)
 	if err != nil {
 		return
 	}
@@ -220,7 +222,7 @@ func (c *Client) InstallParticipationKeys(inputfile string) (part account.Partic
 
 	newpartkey := partkey
 	newpartkey.Store = newdb
-	err = newpartkey.Persist()
+	err = newpartkey.Persist(newpartkey.GetParticipationWithSecrets())
 	if err != nil {
 		newpartkey.Close()
 		return
@@ -240,7 +242,7 @@ func (c *Client) InstallParticipationKeys(inputfile string) (part account.Partic
 		return
 	}
 	os.Remove(inputfile)
-	part = newpartkey.Participation
+	part = partCandidate
 	newpartkey.Close()
 	return part, newdbpath, nil
 }
@@ -284,7 +286,7 @@ func (c *Client) ListParticipationKeys() (partKeyFiles map[string]account.Partic
 			continue
 		}
 
-		partKeyFiles[filename] = part.Participation
+		partKeyFiles[filename] = part.GetParticipationData()
 		part.Close()
 	}
 

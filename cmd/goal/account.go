@@ -800,7 +800,8 @@ var changeOnlineCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			part = &partkey.Participation
+			partData := partkey.GetParticipationData()
+			part = &partData
 			if accountAddress == "" {
 				accountAddress = part.Parent.String()
 			}
@@ -1078,8 +1079,8 @@ var listParticipationKeysCmd = &cobra.Command{
 			onlineInfoStr := "unknown"
 			onlineAccountInfo, err := client.AccountInformation(parts[fn].Address().GetUserAddress())
 			if err == nil {
-				votingBytes := parts[fn].Voting.OneTimeSignatureVerifier
-				vrfBytes := parts[fn].VRF.PK
+				votingBytes := parts[fn].VoteID
+				vrfBytes := parts[fn].SelectionID
 				if onlineAccountInfo.Participation != nil &&
 					(string(onlineAccountInfo.Participation.ParticipationPK) == string(votingBytes[:])) &&
 					(string(onlineAccountInfo.Participation.VRFPK) == string(vrfBytes[:])) &&
@@ -1095,8 +1096,8 @@ var listParticipationKeysCmd = &cobra.Command{
 			first, last := parts[fn].ValidInterval()
 			fmt.Printf(rowFormat, onlineInfoStr, fn, parts[fn].Address().GetUserAddress(),
 				fmt.Sprintf("%d", first),
-				fmt.Sprintf("%d", last),
-				fmt.Sprintf("%d.%d", parts[fn].Voting.FirstBatch, parts[fn].Voting.FirstOffset))
+				fmt.Sprintf("%d", last),)
+				//fmt.Sprintf("%d.%d", parts[fn].Voting.FirstBatch, parts[fn].Voting.FirstOffset))
 		}
 	},
 }
@@ -1312,13 +1313,13 @@ var partkeyInfoCmd = &cobra.Command{
 					Address:         part.Address().String(),
 					FirstValid:      part.FirstValid,
 					LastValid:       part.LastValid,
-					VoteID:          part.VotingSecrets().OneTimeSignatureVerifier,
-					SelectionID:     part.VRFSecrets().PK,
+					VoteID:          part.VoteID,
+					SelectionID:     part.SelectionID,
 					VoteKeyDilution: part.KeyDilution,
 				}
-				if certSigner := part.BlockProofSigner(); certSigner != nil {
-					info.BlockProofID = *certSigner.GetVerifier()
-				}
+				//if certSigner := part.BlockProofSigner(); certSigner != nil {
+					info.BlockProofID = part.BlockProofID
+				//}
 				infoString := protocol.EncodeJSON(&info)
 				fmt.Printf("File: %s\n%s\n", filename, string(infoString))
 			}

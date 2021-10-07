@@ -22,8 +22,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/algorand/go-algorand/crypto/merklekeystore"
-
 	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/data/basics"
 	"github.com/algorand/go-algorand/logging"
@@ -170,30 +168,30 @@ func RestoreParticipation(store db.Accessor) (acc PersistedParticipation, err er
 	}
 
 	acc.Store = store
-
-	acc.VRF = &crypto.VRFSecrets{}
-	err = protocol.Decode(rawVRF, acc.VRF)
-	if err != nil {
-		return PersistedParticipation{}, err
-	}
-
-	acc.Voting = &crypto.OneTimeSignatureSecrets{}
-	err = protocol.Decode(rawVoting, acc.Voting)
-	if err != nil {
-		return PersistedParticipation{}, err
-	}
-
-	if len(rawBlockProof) == 0 {
-		return acc, nil
-	}
-	acc.BlockProof = &merklekeystore.Signer{}
-	if err = protocol.Decode(rawBlockProof, acc.BlockProof); err != nil {
-		return PersistedParticipation{}, err
-	}
-	err = acc.BlockProof.Restore(store)
-	if err != nil {
-		return PersistedParticipation{}, err
-	}
+	//
+	//acc.Secrets.VRF = &crypto.VRFSecrets{}
+	//err = protocol.Decode(rawVRF, acc.Secrets.VRF)
+	//if err != nil {
+	//	return PersistedParticipation{}, err
+	//}
+	//
+	//acc.Secrets.Voting = &crypto.OneTimeSignatureSecrets{}
+	//err = protocol.Decode(rawVoting, acc.Secrets.Voting)
+	//if err != nil {
+	//	return PersistedParticipation{}, err
+	//}
+	//
+	//if len(rawBlockProof) == 0 {
+	//	return acc, nil
+	//}
+	//acc.Secrets.BlockProof = &merklekeystore.Signer{}
+	//if err = protocol.Decode(rawBlockProof, acc.Secrets.BlockProof); err != nil {
+	//	return PersistedParticipation{}, err
+	//}
+	//err = acc.Secrets.BlockProof.Restore(store)
+	//if err != nil {
+	//	return PersistedParticipation{}, err
+	//}
 
 	return acc, nil
 }

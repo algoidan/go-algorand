@@ -179,20 +179,22 @@ func (f *LibGoalFixture) importRootKeys(lg *libgoal.Client, dataDir string) {
 			}
 
 			// Fetch an account.Participation from the database
-			participation, err := account.RestoreParticipation(handle)
+			persistedParticipation, err := account.RestoreParticipation(handle)
 			if err != nil {
 				// Couldn't read it, skip it
 				handle.Close()
 				continue
 			}
 
+			participation := persistedParticipation.GetParticipationData()
+
 			// Early reject partkeys if we already have a rootkey for the account
 			if !accountsWithRootKeys[participation.Address().String()] {
-				allPartKeys = append(allPartKeys, participation.Participation)
+				allPartKeys = append(allPartKeys, participation)
 			}
 
 			// close the database handle.
-			participation.Close()
+			persistedParticipation.Close()
 		}
 	}
 

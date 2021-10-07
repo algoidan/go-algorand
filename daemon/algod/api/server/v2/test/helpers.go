@@ -240,7 +240,7 @@ func testingenv(t testing.TB, numAccounts, numTxs int, offlineAccounts bool) (*d
 		}
 
 		roots[i] = root
-		parts[i] = part.Participation
+		parts[i] = part.GetParticipationData()
 
 		startamt := basics.MicroAlgos{Raw: uint64(minMoneyAtStart + (gen.Int() % (maxMoneyAtStart - minMoneyAtStart)))}
 		short := root.Address()
@@ -249,8 +249,8 @@ func testingenv(t testing.TB, numAccounts, numTxs int, offlineAccounts bool) (*d
 			genesis[short] = basics.MakeAccountData(basics.Offline, startamt)
 		} else {
 			data := basics.MakeAccountData(basics.Online, startamt)
-			data.SelectionID = parts[i].VRFSecrets().PK
-			data.VoteID = parts[i].VotingSecrets().OneTimeSignatureVerifier
+			data.SelectionID = parts[i].SelectionID
+			data.VoteID = parts[i].VoteID
 			genesis[short] = data
 		}
 		part.Close()

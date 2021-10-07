@@ -228,7 +228,7 @@ type KeyManager interface {
 	// VotingKeys returns an immutable array of voting keys that are
 	// valid for the provided votingRound, and were available at
 	// keysRound.
-	VotingKeys(votingRound, keysRound basics.Round) []account.Participation
+	VotingKeys(votingRound, keysRound basics.Round) []account.ParticipationInRound
 }
 
 // MessageHandle is an ID referring to a specific message.
