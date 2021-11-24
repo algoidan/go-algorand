@@ -39,6 +39,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"github.com/algorand/go-algorand/logging"
 	"unsafe"
 )
 
@@ -123,7 +124,18 @@ func (b *BatchVerifier) Verify() error {
 		return ErrZeroTranscationsInBatch
 	}
 
-	//return  b.verifyOneByOne()
+	numOfSigs := b.GetNumberOfEnqueuedSignatures()
+	if numOfSigs < 3 {
+		for i := numOfSigs; i < 3; i++ {
+			b.EnqueueSignature(b.publicKeys[0], b.messages[0], b.signatures[0])
+		}
+	}
+	logging.Base().Infof("bv: v %d", b.GetNumberOfEnqueuedSignatures())
+	errSingle := b.verifyOneByOne()
+	if errSingle != nil {
+		logging.Base().Errorf("bv: single verification failed!")
+	}
+
 	var messages = make([][]byte, b.GetNumberOfEnqueuedSignatures())
 	for i, m := range b.messages {
 		messages[i] = hashRep(m)
@@ -131,6 +143,8 @@ func (b *BatchVerifier) Verify() error {
 	if batchVerificationImpl(messages, b.publicKeys, b.signatures) {
 		return nil
 	}
+	logging.Base().Errorf("bv: batch verification failed!")
+	panic("algorithm disagree on signature ")
 	return fmt.Errorf("erro checking batch")
 }
 

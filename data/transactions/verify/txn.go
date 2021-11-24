@@ -42,7 +42,7 @@ var logicErrTotal = metrics.MakeCounter(metrics.MetricName{Name: "algod_ledger_l
 // to avoid context switching overhead while providing good validation cancelation responsiveness. Each one of these worksets is
 // "populated" with roughly txnPerWorksetThreshold transactions. ( note that the real evaluation time is unknown, but benchmarks
 // show that these are realistic numbers )
-const txnPerWorksetThreshold = 32
+const txnPerWorksetThreshold = 1000
 
 // When the PaysetGroups is generating worksets, it enqueues up to concurrentWorksets entries to the execution pool. This serves several
 // purposes :
@@ -50,7 +50,7 @@ const txnPerWorksetThreshold = 32
 // - that number of concurrent tasks would not get beyond the capacity of the execution pool back buffer.
 // - if we were to "redundantly" execute all these during context cancelation, we would spent at most 2ms * 16 = 32ms time.
 // - it allows us to linearly scan the input, and process elements only once we're going to queue them into the pool.
-const concurrentWorksets = 16
+const concurrentWorksets = 1
 
 // GroupContext is the set of parameters external to a transaction which
 // stateless checks are performed against.
