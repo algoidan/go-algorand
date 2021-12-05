@@ -131,6 +131,56 @@ ed25519verify`, pkStr), v)
 	}
 }
 
+func TestEd25519WithPreGeneratedKey(t *testing.T) {
+	partitiontest.PartitionTest(t)
+
+	t.Parallel()
+
+	c := GetPreGeneratedKey()
+	msg := "62fdfc072182654f163f5f0f9a621d729566c74d0aa413bf009c9800418c19c2"
+	data, err := hex.DecodeString(msg)
+	require.NoError(t, err)
+	pk := basics.Address(c.SignatureVerifier)
+	pkStr := pk.String()
+
+	for v := uint64(1); v <= AssemblerMaxVersion; v++ {
+		t.Run(fmt.Sprintf("v=%d", v), func(t *testing.T) {
+			ops, err := AssembleStringWithVersion(fmt.Sprintf(`arg 0
+arg 1
+addr %s
+ed25519verify`, pkStr), v)
+			require.NoError(t, err)
+			sig := c.Sign(Msg{
+				ProgramHash: crypto.HashObj(Program(ops.Program)),
+				Data:        data[:],
+			})
+			var txn transactions.SignedTxn
+			txn.Lsig.Logic = ops.Program
+			txn.Lsig.Args = [][]byte{data[:], sig[:]}
+			sb := strings.Builder{}
+			params := defaultEvalParams(&sb, &txn)
+			params.Proto.EnableBatchVerification = false
+
+			pass, err := Eval(ops.Program, params)
+			if !pass {
+				t.Log(hex.EncodeToString(ops.Program))
+				t.Log(sb.String())
+			}
+			require.False(t, pass)
+
+			params.Proto.EnableBatchVerification = true
+			pass, err = Eval(ops.Program, params)
+			if !pass {
+				t.Log(hex.EncodeToString(ops.Program))
+				t.Log(sb.String())
+			}
+			require.True(t, pass)
+			require.NoError(t, err)
+
+		})
+	}
+}
+
 // bitIntFillBytes is a replacement for big.Int.FillBytes from future Go
 func bitIntFillBytes(b *big.Int, buf []byte) []byte {
 	for i := range buf {
@@ -539,4 +589,14 @@ pop
 int 1`
 		benchmarkEcdsa(b, source)
 	})
+}
+
+func GetPreGeneratedKey() *crypto.SignatureSecrets {
+	secKey := [64]byte{0x49, 0xd4, 0xcd, 0x9c, 0x99, 0x43, 0xce, 0xaf, 0xc, 0x5b, 0x3f, 0x9a, 0xfa, 0xbc, 0x9c, 0xd9, 0x19, 0x71, 0x69, 0x50, 0x90, 0xb6, 0x30, 0x3b, 0xf5, 0x1d, 0x3f, 0x73, 0x43, 0xe8, 0xb4, 0x22, 0x2e, 0x74, 0x5, 0xfe, 0xc6, 0x99, 0xa2, 0xa5, 0xd4, 0xf8, 0x9e, 0xcf, 0x38, 0xd6, 0x28, 0x28, 0xe6, 0xd0, 0x72, 0x9b, 0x9c, 0x4c, 0xea, 0x27, 0xd5, 0xe5, 0x99, 0xa3, 0xc4, 0x43, 0x2a, 0x39}
+	var pub [32]byte
+	copy(pub[:], secKey[32:])
+	secrets := crypto.SignatureSecrets{}
+	secrets.SK = secKey
+	secrets.SignatureVerifier = pub
+	return &secrets
 }

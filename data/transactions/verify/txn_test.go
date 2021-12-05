@@ -106,6 +106,16 @@ func generateTestObjects(numTxs, numAccs int, blockRound basics.Round) ([]transa
 	return txs, signed, secrets, addresses
 }
 
+func GetPreGeneratedKey() *crypto.SignatureSecrets {
+	secKey := [64]byte{0x49, 0xd4, 0xcd, 0x9c, 0x99, 0x43, 0xce, 0xaf, 0xc, 0x5b, 0x3f, 0x9a, 0xfa, 0xbc, 0x9c, 0xd9, 0x19, 0x71, 0x69, 0x50, 0x90, 0xb6, 0x30, 0x3b, 0xf5, 0x1d, 0x3f, 0x73, 0x43, 0xe8, 0xb4, 0x22, 0x2e, 0x74, 0x5, 0xfe, 0xc6, 0x99, 0xa2, 0xa5, 0xd4, 0xf8, 0x9e, 0xcf, 0x38, 0xd6, 0x28, 0x28, 0xe6, 0xd0, 0x72, 0x9b, 0x9c, 0x4c, 0xea, 0x27, 0xd5, 0xe5, 0x99, 0xa3, 0xc4, 0x43, 0x2a, 0x39}
+	var pub [32]byte
+	copy(pub[:], secKey[32:])
+	secrets := crypto.SignatureSecrets{}
+	secrets.SK = secKey
+	secrets.SignatureVerifier = pub
+	return &secrets
+}
+
 func TestSignedPayment(t *testing.T) {
 	partitiontest.PartitionTest(t)
 
@@ -127,6 +137,40 @@ func TestSignedPayment(t *testing.T) {
 	require.Error(t, Txn(&stxn2, 0, groupCtx), "verify succeeded with bad sig")
 
 	require.True(t, crypto.SignatureVerifier(addr).Verify(payment, stxn.Sig, true), "signature on the transaction is not the signature of the hash of the transaction under the spender's key")
+}
+
+func TestTransactionWithPreGeneratedKey(t *testing.T) {
+	partitiontest.PartitionTest(t)
+
+	proto := config.Consensus[protocol.ConsensusCurrentVersion]
+
+	secrets := GetPreGeneratedKey()
+
+	payments, stxns, _, _ := generateTestObjects(1, 1, 0)
+	payment := payments[0]
+	payment.Header.Sender = basics.Address(secrets.SignatureVerifier)
+	payment.PaymentTxnFields.Receiver = basics.Address(secrets.SignatureVerifier)
+
+	stxn := payment.Sign(secrets)
+	stxns[0] = stxn
+
+	groupCtx, err := PrepareGroupContext(stxns, blockHeader)
+	require.NoError(t, err)
+	require.NoError(t, payment.WellFormed(spec, proto), "generateTestObjects generated an invalid payment")
+	require.Error(t, Txn(&stxn, 0, groupCtx), "verification of the transaction should have failed")
+
+	proto = config.Consensus[protocol.ConsensusCurrentVersion]
+	proto.EnableBatchVerification = true
+	config.Consensus[protocol.ConsensusCurrentVersion] = proto
+	defer func() {
+		proto.EnableBatchVerification = false
+		config.Consensus[protocol.ConsensusCurrentVersion] = proto
+	}()
+
+	groupCtx, err = PrepareGroupContext(stxns, blockHeader)
+	require.NoError(t, err)
+	require.NoError(t, payment.WellFormed(spec, proto), "generateTestObjects generated an invalid payment")
+	require.NoError(t, Txn(&stxn, 0, groupCtx), "verification of the transaction failed")
 }
 
 func TestTxnValidationEncodeDecode(t *testing.T) {

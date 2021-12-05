@@ -84,7 +84,7 @@ func TestBatchVerifierBulkWithExpand(t *testing.T) {
 	require.NoError(t, bv.Verify())
 }
 
-func TestBatchVerifierWithInvalidSiganture(t *testing.T) {
+func TestBatchVerifierWithInvalidSignature(t *testing.T) {
 	partitiontest.PartitionTest(t)
 	n := 64
 	bv := MakeBatchVerifierWithAlgorithmDefaultSize()
@@ -105,6 +105,33 @@ func TestBatchVerifierWithInvalidSiganture(t *testing.T) {
 	bv.EnqueueSignature(sigSecrets.SignatureVerifier, msg, sig)
 
 	require.Error(t, bv.Verify())
+}
+
+func TestBatchVerifierWithPreGeneratedKey(t *testing.T) {
+	partitiontest.PartitionTest(t)
+	n := 4
+	bvCompatible := MakeBatchVerifier(n+1, true)
+	bv := MakeBatchVerifier(n+1, false)
+	var s Seed
+	RandBytes(s[:])
+
+	for i := 0; i < n-1; i++ {
+		msg := randString()
+		sigSecrets := GenerateSignatureSecrets(s)
+		sig := sigSecrets.Sign(msg)
+		bv.EnqueueSignature(sigSecrets.SignatureVerifier, msg, sig)
+		bvCompatible.EnqueueSignature(sigSecrets.SignatureVerifier, msg, sig)
+	}
+
+	secrets := GetPreGeneratedKey()
+
+	m := TestingHashable{[]byte{0x34, 0x32}}
+	sig := secrets.Sign(m)
+	bv.EnqueueSignature(secrets.SignatureVerifier, m, sig)
+	bvCompatible.EnqueueSignature(secrets.SignatureVerifier, m, sig)
+
+	require.Error(t, bv.Verify())
+	require.NoError(t, bvCompatible.Verify())
 }
 
 func BenchmarkBatchVerifier(b *testing.B) {
