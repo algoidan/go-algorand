@@ -6,7 +6,7 @@ import (
 	_ "runtime/cgo"
 	_ "unsafe"
 
-	cfalcon "github.com/algorand/falcon"
+	cfalcon "github.com/algoidan/falcon"
 	"github.com/algorand/msgp/msgp"
 )
 
@@ -34,6 +34,14 @@ import (
 //        |-----> (*) CanUnmarshalMsg
 //        |-----> (*) Msgsize
 //        |-----> (*) MsgIsZero
+//
+// FalconS1Coefficients
+//           |-----> (*) MarshalMsg
+//           |-----> (*) CanMarshalMsg
+//           |-----> (*) UnmarshalMsg
+//           |-----> (*) CanUnmarshalMsg
+//           |-----> (*) Msgsize
+//           |-----> (*) MsgIsZero
 //
 // FalconSeed
 //      |-----> (*) MarshalMsg
@@ -399,6 +407,60 @@ func (z *FalconPublicKey) Msgsize() (s int) {
 // MsgIsZero returns whether this is a zero value
 func (z *FalconPublicKey) MsgIsZero() bool {
 	return (*z) == (FalconPublicKey{})
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *FalconS1Coefficients) MarshalMsg(b []byte) (o []byte) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendArrayHeader(o, FalconCoefficientsSize)
+	for zb0001 := range *z {
+		o = msgp.AppendInt16(o, (*z)[zb0001])
+	}
+	return
+}
+
+func (_ *FalconS1Coefficients) CanMarshalMsg(z interface{}) bool {
+	_, ok := (z).(*FalconS1Coefficients)
+	return ok
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *FalconS1Coefficients) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var zb0002 int
+	zb0002, _, bts, err = msgp.ReadArrayHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if zb0002 > FalconCoefficientsSize {
+		err = msgp.ArrayError{Wanted: FalconCoefficientsSize, Got: zb0002}
+		return
+	}
+	for zb0001 := 0; zb0001 < zb0002; zb0001++ {
+		(*z)[zb0001], bts, err = msgp.ReadInt16Bytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err, zb0001)
+			return
+		}
+	}
+	o = bts
+	return
+}
+
+func (_ *FalconS1Coefficients) CanUnmarshalMsg(z interface{}) bool {
+	_, ok := (z).(*FalconS1Coefficients)
+	return ok
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *FalconS1Coefficients) Msgsize() (s int) {
+	s = msgp.ArrayHeaderSize + (FalconCoefficientsSize * (msgp.Int16Size))
+	return
+}
+
+// MsgIsZero returns whether this is a zero value
+func (z *FalconS1Coefficients) MsgIsZero() bool {
+	return (*z) == (FalconS1Coefficients{})
 }
 
 // MarshalMsg implements msgp.Marshaler

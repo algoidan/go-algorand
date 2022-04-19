@@ -17,7 +17,7 @@
 package crypto
 
 import (
-	"github.com/algorand/falcon"
+	"github.com/algoidan/falcon"
 	"github.com/algorand/go-algorand/test/partitiontest"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -126,4 +126,21 @@ func TestFalconSignature_ValidateVersion(t *testing.T) {
 
 	byteSig[1]++
 	a.False(byteSig.IsSaltVersionEqual(falcon.CurrentSaltVersion))
+}
+
+func TestFalconCoefficients(t *testing.T) {
+	partitiontest.PartitionTest(t)
+	a := require.New(t)
+
+	var seed FalconSeed
+	SystemRNG.RandBytes(seed[:])
+	key, err := GenerateFalconSigner(seed)
+	a.NoError(err)
+
+	msg := []byte("Neque porro quisquam est qui dolorem ipsum quia dolor sit amet")
+	sig, err := key.SignBytes(msg)
+	a.NoError(err)
+
+	_, err = key.GetVerifyingKey().GetS1Coefficients(msg, sig)
+	a.NoError(err)
 }

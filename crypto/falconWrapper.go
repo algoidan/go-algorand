@@ -17,7 +17,7 @@
 package crypto
 
 import (
-	cfalcon "github.com/algorand/falcon"
+	cfalcon "github.com/algoidan/falcon"
 )
 
 const (
@@ -26,6 +26,8 @@ const (
 
 	// FalconMaxSignatureSize Represents the max possible size in bytes of a falcon signature
 	FalconMaxSignatureSize = cfalcon.CTSignatureSize
+
+	FalconCoefficientsSize = cfalcon.N
 )
 
 type (
@@ -38,6 +40,8 @@ type (
 	// FalconSignature represents a Falcon signature in a compressed-form
 	//msgp:allocbound FalconSignature FalconMaxSignatureSize
 	FalconSignature []byte
+
+	FalconS1Coefficients [FalconCoefficientsSize]int16
 )
 
 // FalconSigner is the implementation of Signer for the Falcon signature scheme.
@@ -123,4 +127,26 @@ func (s FalconSignature) GetFixedLengthHashableRepresentation() ([]byte, error) 
 // IsSaltVersionEqual of the signature matches the given version
 func (s FalconSignature) IsSaltVersionEqual(version byte) bool {
 	return (*cfalcon.CompressedSignature)(&s).SaltVersion() == version
+}
+
+func (d *FalconVerifier) GetS1Coefficients(data []byte, sig FalconSignature) (FalconS1Coefficients, error) {
+	ctSignature, err := (*cfalcon.CompressedSignature)(&sig).ConvertToCT()
+	if err != nil {
+		return FalconS1Coefficients{}, err
+	}
+
+	h, err := (cfalcon.PublicKey)(d.PublicKey).Coefficients()
+	if err != nil {
+		return FalconS1Coefficients{}, err
+	}
+	c := cfalcon.HashToPointCoefficients(data, ctSignature.SaltVersion())
+	s2, err := ctSignature.S2Coefficients()
+	if err != nil {
+		return FalconS1Coefficients{}, err
+	}
+	s1, err := cfalcon.S1Coefficients(h, c, s2)
+	if err != nil {
+		return FalconS1Coefficients{}, err
+	}
+	return s1, nil
 }
