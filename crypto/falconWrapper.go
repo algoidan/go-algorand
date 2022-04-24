@@ -129,24 +129,24 @@ func (s FalconSignature) IsSaltVersionEqual(version byte) bool {
 	return (*cfalcon.CompressedSignature)(&s).SaltVersion() == version
 }
 
-func (d *FalconVerifier) GetS1Coefficients(data []byte, sig FalconSignature) (FalconS1Coefficients, error) {
+func GetSignatureAuxiliaryData(d *FalconVerifier, data []byte, sig FalconSignature) (s1Coefficients FalconS1Coefficients, ctSig []byte, err error) {
 	ctSignature, err := (*cfalcon.CompressedSignature)(&sig).ConvertToCT()
 	if err != nil {
-		return FalconS1Coefficients{}, err
+		return FalconS1Coefficients{}, nil, err
 	}
 
 	h, err := (cfalcon.PublicKey)(d.PublicKey).Coefficients()
 	if err != nil {
-		return FalconS1Coefficients{}, err
+		return FalconS1Coefficients{}, nil, err
 	}
 	c := cfalcon.HashToPointCoefficients(data, ctSignature.SaltVersion())
 	s2, err := ctSignature.S2Coefficients()
 	if err != nil {
-		return FalconS1Coefficients{}, err
+		return FalconS1Coefficients{}, nil, err
 	}
 	s1, err := cfalcon.S1Coefficients(h, c, s2)
 	if err != nil {
-		return FalconS1Coefficients{}, err
+		return FalconS1Coefficients{}, nil, err
 	}
-	return s1, nil
+	return s1, ctSignature[:], nil
 }

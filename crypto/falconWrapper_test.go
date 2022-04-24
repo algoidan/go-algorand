@@ -141,6 +141,12 @@ func TestFalconCoefficients(t *testing.T) {
 	sig, err := key.SignBytes(msg)
 	a.NoError(err)
 
-	_, err = key.GetVerifyingKey().GetS1Coefficients(msg, sig)
+	_, ctSig, err := GetSignatureAuxiliaryData(key.GetVerifyingKey(), msg, sig)
 	a.NoError(err)
+
+	ctSig2, err := sig.GetFixedLengthHashableRepresentation()
+	a.NoError(err)
+
+	a.Equal(ctSig, ctSig2)
+
 }
