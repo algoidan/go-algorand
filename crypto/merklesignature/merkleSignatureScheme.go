@@ -319,3 +319,22 @@ func (s *Signature) GetFixedLengthHashableRepresentation() ([]byte, error) {
 	merkleSignatureBytes = append(merkleSignatureBytes, proofBytes...)
 	return merkleSignatureBytes, nil
 }
+
+// SnarkFriendlySignature is an extension for the merkle signature scheme.
+// it adds falcon's auxiliary data to be used by the SNARK prover
+type SnarkFriendlySignature struct {
+	_struct struct{} `codec:",omitempty,omitemptyarray"`
+
+	Signature
+	S1Values    crypto.FalconS1Coefficients `codec:"s1"`
+	CTSignature crypto.FalconCTSignature    `codec:"csig"`
+}
+
+// CreateSNARKFriendlySignature adds falcon's auxiliary data to be used by the SNARK prover
+func (s Signature) CreateSNARKFriendlySignature(data []byte) (SnarkFriendlySignature, error) {
+	s1, ctSig, err := crypto.GetSignatureAuxiliaryData(&s.VerifyingKey, data, s.Signature)
+	if err != nil {
+		return SnarkFriendlySignature{}, err
+	}
+	return SnarkFriendlySignature{Signature: s, S1Values: s1, CTSignature: ctSig}, nil
+}

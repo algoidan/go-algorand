@@ -19,6 +19,14 @@ import (
 //    |-----> (*) Msgsize
 //    |-----> (*) MsgIsZero
 //
+// FalconCTSignature
+//         |-----> (*) MarshalMsg
+//         |-----> (*) CanMarshalMsg
+//         |-----> (*) UnmarshalMsg
+//         |-----> (*) CanUnmarshalMsg
+//         |-----> (*) Msgsize
+//         |-----> (*) MsgIsZero
+//
 // FalconPrivateKey
 //         |-----> (*) MarshalMsg
 //         |-----> (*) CanMarshalMsg
@@ -332,6 +340,45 @@ func (z *Digest) MsgIsZero() bool {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z *FalconCTSignature) MarshalMsg(b []byte) (o []byte) {
+	o = msgp.Require(b, z.Msgsize())
+	o = msgp.AppendBytes(o, (*z)[:])
+	return
+}
+
+func (_ *FalconCTSignature) CanMarshalMsg(z interface{}) bool {
+	_, ok := (z).(*FalconCTSignature)
+	return ok
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *FalconCTSignature) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	bts, err = msgp.ReadExactBytes(bts, (*z)[:])
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	o = bts
+	return
+}
+
+func (_ *FalconCTSignature) CanUnmarshalMsg(z interface{}) bool {
+	_, ok := (z).(*FalconCTSignature)
+	return ok
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *FalconCTSignature) Msgsize() (s int) {
+	s = msgp.ArrayHeaderSize + (cfalcon.CTSignatureSize * (msgp.ByteSize))
+	return
+}
+
+// MsgIsZero returns whether this is a zero value
+func (z *FalconCTSignature) MsgIsZero() bool {
+	return (*z) == (FalconCTSignature{})
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *FalconPrivateKey) MarshalMsg(b []byte) (o []byte) {
 	o = msgp.Require(b, z.Msgsize())
 	o = msgp.AppendBytes(o, (*z)[:])
@@ -412,7 +459,7 @@ func (z *FalconPublicKey) MsgIsZero() bool {
 // MarshalMsg implements msgp.Marshaler
 func (z *FalconS1Coefficients) MarshalMsg(b []byte) (o []byte) {
 	o = msgp.Require(b, z.Msgsize())
-	o = msgp.AppendArrayHeader(o, FalconCoefficientsSize)
+	o = msgp.AppendArrayHeader(o, FalconDegree)
 	for zb0001 := range *z {
 		o = msgp.AppendInt16(o, (*z)[zb0001])
 	}
@@ -432,8 +479,8 @@ func (z *FalconS1Coefficients) UnmarshalMsg(bts []byte) (o []byte, err error) {
 		err = msgp.WrapError(err)
 		return
 	}
-	if zb0002 > FalconCoefficientsSize {
-		err = msgp.ArrayError{Wanted: FalconCoefficientsSize, Got: zb0002}
+	if zb0002 > FalconDegree {
+		err = msgp.ArrayError{Wanted: FalconDegree, Got: zb0002}
 		return
 	}
 	for zb0001 := 0; zb0001 < zb0002; zb0001++ {
@@ -454,7 +501,7 @@ func (_ *FalconS1Coefficients) CanUnmarshalMsg(z interface{}) bool {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *FalconS1Coefficients) Msgsize() (s int) {
-	s = msgp.ArrayHeaderSize + (FalconCoefficientsSize * (msgp.Int16Size))
+	s = msgp.ArrayHeaderSize + (FalconDegree * (msgp.Int16Size))
 	return
 }
 

@@ -41,6 +41,30 @@ import (
 //       |-----> (*) Msgsize
 //       |-----> (*) MsgIsZero
 //
+// snarkFriendlyCert
+//         |-----> (*) MarshalMsg
+//         |-----> (*) CanMarshalMsg
+//         |-----> (*) UnmarshalMsg
+//         |-----> (*) CanUnmarshalMsg
+//         |-----> (*) Msgsize
+//         |-----> (*) MsgIsZero
+//
+// snarkFriendlyReveal
+//          |-----> (*) MarshalMsg
+//          |-----> (*) CanMarshalMsg
+//          |-----> (*) UnmarshalMsg
+//          |-----> (*) CanUnmarshalMsg
+//          |-----> (*) Msgsize
+//          |-----> (*) MsgIsZero
+//
+// snarkFriendlySigslotCommit
+//              |-----> (*) MarshalMsg
+//              |-----> (*) CanMarshalMsg
+//              |-----> (*) UnmarshalMsg
+//              |-----> (*) CanUnmarshalMsg
+//              |-----> (*) Msgsize
+//              |-----> (*) MsgIsZero
+//
 
 // MarshalMsg implements msgp.Marshaler
 func (z *MessageHash) MarshalMsg(b []byte) (o []byte) {
@@ -858,5 +882,609 @@ func (z *sigslotCommit) Msgsize() (s int) {
 
 // MsgIsZero returns whether this is a zero value
 func (z *sigslotCommit) MsgIsZero() bool {
+	return ((*z).Sig.MsgIsZero()) && ((*z).L == 0)
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *snarkFriendlyCert) MarshalMsg(b []byte) (o []byte) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 4
+	// string "c"
+	o = append(o, 0x84, 0xa1, 0x63)
+	o = (*z).SigCommit.MarshalMsg(o)
+	// string "r"
+	o = append(o, 0xa1, 0x72)
+	if (*z).Reveals == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o = msgp.AppendArrayHeader(o, uint32(len((*z).Reveals)))
+	}
+	for zb0001 := range (*z).Reveals {
+		o = (*z).Reveals[zb0001].MarshalMsg(o)
+	}
+	// string "v"
+	o = append(o, 0xa1, 0x76)
+	o = msgp.AppendByte(o, (*z).MerkleSignatureSaltVersion)
+	// string "w"
+	o = append(o, 0xa1, 0x77)
+	o = msgp.AppendUint64(o, (*z).SignedWeight)
+	return
+}
+
+func (_ *snarkFriendlyCert) CanMarshalMsg(z interface{}) bool {
+	_, ok := (z).(*snarkFriendlyCert)
+	return ok
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *snarkFriendlyCert) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0002 int
+	var zb0003 bool
+	zb0002, zb0003, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if _, ok := err.(msgp.TypeError); ok {
+		zb0002, zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0002 > 0 {
+			zb0002--
+			bts, err = (*z).SigCommit.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "SigCommit")
+				return
+			}
+		}
+		if zb0002 > 0 {
+			zb0002--
+			(*z).SignedWeight, bts, err = msgp.ReadUint64Bytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "SignedWeight")
+				return
+			}
+		}
+		if zb0002 > 0 {
+			zb0002--
+			(*z).MerkleSignatureSaltVersion, bts, err = msgp.ReadByteBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "MerkleSignatureSaltVersion")
+				return
+			}
+		}
+		if zb0002 > 0 {
+			zb0002--
+			var zb0004 int
+			var zb0005 bool
+			zb0004, zb0005, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "Reveals")
+				return
+			}
+			if zb0004 > MaxReveals {
+				err = msgp.ErrOverflow(uint64(zb0004), uint64(MaxReveals))
+				err = msgp.WrapError(err, "struct-from-array", "Reveals")
+				return
+			}
+			if zb0005 {
+				(*z).Reveals = nil
+			} else if (*z).Reveals != nil && cap((*z).Reveals) >= zb0004 {
+				(*z).Reveals = ((*z).Reveals)[:zb0004]
+			} else {
+				(*z).Reveals = make([]snarkFriendlyReveal, zb0004)
+			}
+			for zb0001 := range (*z).Reveals {
+				bts, err = (*z).Reveals[zb0001].UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "struct-from-array", "Reveals", zb0001)
+					return
+				}
+			}
+		}
+		if zb0002 > 0 {
+			err = msgp.ErrTooManyArrayFields(zb0002)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array")
+				return
+			}
+		}
+	} else {
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0003 {
+			(*z) = snarkFriendlyCert{}
+		}
+		for zb0002 > 0 {
+			zb0002--
+			field, bts, err = msgp.ReadMapKeyZC(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+			switch string(field) {
+			case "c":
+				bts, err = (*z).SigCommit.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "SigCommit")
+					return
+				}
+			case "w":
+				(*z).SignedWeight, bts, err = msgp.ReadUint64Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "SignedWeight")
+					return
+				}
+			case "v":
+				(*z).MerkleSignatureSaltVersion, bts, err = msgp.ReadByteBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "MerkleSignatureSaltVersion")
+					return
+				}
+			case "r":
+				var zb0006 int
+				var zb0007 bool
+				zb0006, zb0007, bts, err = msgp.ReadArrayHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Reveals")
+					return
+				}
+				if zb0006 > MaxReveals {
+					err = msgp.ErrOverflow(uint64(zb0006), uint64(MaxReveals))
+					err = msgp.WrapError(err, "Reveals")
+					return
+				}
+				if zb0007 {
+					(*z).Reveals = nil
+				} else if (*z).Reveals != nil && cap((*z).Reveals) >= zb0006 {
+					(*z).Reveals = ((*z).Reveals)[:zb0006]
+				} else {
+					(*z).Reveals = make([]snarkFriendlyReveal, zb0006)
+				}
+				for zb0001 := range (*z).Reveals {
+					bts, err = (*z).Reveals[zb0001].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Reveals", zb0001)
+						return
+					}
+				}
+			default:
+				err = msgp.ErrNoField(string(field))
+				if err != nil {
+					err = msgp.WrapError(err)
+					return
+				}
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+func (_ *snarkFriendlyCert) CanUnmarshalMsg(z interface{}) bool {
+	_, ok := (z).(*snarkFriendlyCert)
+	return ok
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *snarkFriendlyCert) Msgsize() (s int) {
+	s = 1 + 2 + (*z).SigCommit.Msgsize() + 2 + msgp.Uint64Size + 2 + msgp.ByteSize + 2 + msgp.ArrayHeaderSize
+	for zb0001 := range (*z).Reveals {
+		s += (*z).Reveals[zb0001].Msgsize()
+	}
+	return
+}
+
+// MsgIsZero returns whether this is a zero value
+func (z *snarkFriendlyCert) MsgIsZero() bool {
+	return ((*z).SigCommit.MsgIsZero()) && ((*z).SignedWeight == 0) && ((*z).MerkleSignatureSaltVersion == 0) && (len((*z).Reveals) == 0)
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *snarkFriendlyReveal) MarshalMsg(b []byte) (o []byte) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 5
+	// string "p"
+	o = append(o, 0x85, 0xa1, 0x70)
+	o = (*z).Part.MarshalMsg(o)
+	// string "pos"
+	o = append(o, 0xa3, 0x70, 0x6f, 0x73)
+	o = msgp.AppendUint64(o, (*z).Position)
+	// string "pp"
+	o = append(o, 0xa2, 0x70, 0x70)
+	o = (*z).PartProof.MarshalMsg(o)
+	// string "s"
+	o = append(o, 0xa1, 0x73)
+	// map header, size 2
+	// string "l"
+	o = append(o, 0x82, 0xa1, 0x6c)
+	o = msgp.AppendUint64(o, (*z).SigSlot.L)
+	// string "s"
+	o = append(o, 0xa1, 0x73)
+	o = (*z).SigSlot.Sig.MarshalMsg(o)
+	// string "sp"
+	o = append(o, 0xa2, 0x73, 0x70)
+	o = (*z).SigProof.MarshalMsg(o)
+	return
+}
+
+func (_ *snarkFriendlyReveal) CanMarshalMsg(z interface{}) bool {
+	_, ok := (z).(*snarkFriendlyReveal)
+	return ok
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *snarkFriendlyReveal) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 int
+	var zb0002 bool
+	zb0001, zb0002, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if _, ok := err.(msgp.TypeError); ok {
+		zb0001, zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0001 > 0 {
+			zb0001--
+			(*z).Position, bts, err = msgp.ReadUint64Bytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "Position")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			var zb0003 int
+			var zb0004 bool
+			zb0003, zb0004, bts, err = msgp.ReadMapHeaderBytes(bts)
+			if _, ok := err.(msgp.TypeError); ok {
+				zb0003, zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "struct-from-array", "SigSlot")
+					return
+				}
+				if zb0003 > 0 {
+					zb0003--
+					bts, err = (*z).SigSlot.Sig.UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "struct-from-array", "SigSlot", "struct-from-array", "Sig")
+						return
+					}
+				}
+				if zb0003 > 0 {
+					zb0003--
+					(*z).SigSlot.L, bts, err = msgp.ReadUint64Bytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "struct-from-array", "SigSlot", "struct-from-array", "L")
+						return
+					}
+				}
+				if zb0003 > 0 {
+					err = msgp.ErrTooManyArrayFields(zb0003)
+					if err != nil {
+						err = msgp.WrapError(err, "struct-from-array", "SigSlot", "struct-from-array")
+						return
+					}
+				}
+			} else {
+				if err != nil {
+					err = msgp.WrapError(err, "struct-from-array", "SigSlot")
+					return
+				}
+				if zb0004 {
+					(*z).SigSlot = snarkFriendlySigslotCommit{}
+				}
+				for zb0003 > 0 {
+					zb0003--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "struct-from-array", "SigSlot")
+						return
+					}
+					switch string(field) {
+					case "s":
+						bts, err = (*z).SigSlot.Sig.UnmarshalMsg(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "struct-from-array", "SigSlot", "Sig")
+							return
+						}
+					case "l":
+						(*z).SigSlot.L, bts, err = msgp.ReadUint64Bytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "struct-from-array", "SigSlot", "L")
+							return
+						}
+					default:
+						err = msgp.ErrNoField(string(field))
+						if err != nil {
+							err = msgp.WrapError(err, "struct-from-array", "SigSlot")
+							return
+						}
+					}
+				}
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).SigProof.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "SigProof")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).Part.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "Part")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).PartProof.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "PartProof")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			err = msgp.ErrTooManyArrayFields(zb0001)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array")
+				return
+			}
+		}
+	} else {
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0002 {
+			(*z) = snarkFriendlyReveal{}
+		}
+		for zb0001 > 0 {
+			zb0001--
+			field, bts, err = msgp.ReadMapKeyZC(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+			switch string(field) {
+			case "pos":
+				(*z).Position, bts, err = msgp.ReadUint64Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Position")
+					return
+				}
+			case "s":
+				var zb0005 int
+				var zb0006 bool
+				zb0005, zb0006, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if _, ok := err.(msgp.TypeError); ok {
+					zb0005, zb0006, bts, err = msgp.ReadArrayHeaderBytes(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "SigSlot")
+						return
+					}
+					if zb0005 > 0 {
+						zb0005--
+						bts, err = (*z).SigSlot.Sig.UnmarshalMsg(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "SigSlot", "struct-from-array", "Sig")
+							return
+						}
+					}
+					if zb0005 > 0 {
+						zb0005--
+						(*z).SigSlot.L, bts, err = msgp.ReadUint64Bytes(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "SigSlot", "struct-from-array", "L")
+							return
+						}
+					}
+					if zb0005 > 0 {
+						err = msgp.ErrTooManyArrayFields(zb0005)
+						if err != nil {
+							err = msgp.WrapError(err, "SigSlot", "struct-from-array")
+							return
+						}
+					}
+				} else {
+					if err != nil {
+						err = msgp.WrapError(err, "SigSlot")
+						return
+					}
+					if zb0006 {
+						(*z).SigSlot = snarkFriendlySigslotCommit{}
+					}
+					for zb0005 > 0 {
+						zb0005--
+						field, bts, err = msgp.ReadMapKeyZC(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "SigSlot")
+							return
+						}
+						switch string(field) {
+						case "s":
+							bts, err = (*z).SigSlot.Sig.UnmarshalMsg(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "SigSlot", "Sig")
+								return
+							}
+						case "l":
+							(*z).SigSlot.L, bts, err = msgp.ReadUint64Bytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "SigSlot", "L")
+								return
+							}
+						default:
+							err = msgp.ErrNoField(string(field))
+							if err != nil {
+								err = msgp.WrapError(err, "SigSlot")
+								return
+							}
+						}
+					}
+				}
+			case "sp":
+				bts, err = (*z).SigProof.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "SigProof")
+					return
+				}
+			case "p":
+				bts, err = (*z).Part.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Part")
+					return
+				}
+			case "pp":
+				bts, err = (*z).PartProof.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "PartProof")
+					return
+				}
+			default:
+				err = msgp.ErrNoField(string(field))
+				if err != nil {
+					err = msgp.WrapError(err)
+					return
+				}
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+func (_ *snarkFriendlyReveal) CanUnmarshalMsg(z interface{}) bool {
+	_, ok := (z).(*snarkFriendlyReveal)
+	return ok
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *snarkFriendlyReveal) Msgsize() (s int) {
+	s = 1 + 4 + msgp.Uint64Size + 2 + 1 + 2 + (*z).SigSlot.Sig.Msgsize() + 2 + msgp.Uint64Size + 3 + (*z).SigProof.Msgsize() + 2 + (*z).Part.Msgsize() + 3 + (*z).PartProof.Msgsize()
+	return
+}
+
+// MsgIsZero returns whether this is a zero value
+func (z *snarkFriendlyReveal) MsgIsZero() bool {
+	return ((*z).Position == 0) && (((*z).SigSlot.Sig.MsgIsZero()) && ((*z).SigSlot.L == 0)) && ((*z).SigProof.MsgIsZero()) && ((*z).Part.MsgIsZero()) && ((*z).PartProof.MsgIsZero())
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *snarkFriendlySigslotCommit) MarshalMsg(b []byte) (o []byte) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 2
+	// string "l"
+	o = append(o, 0x82, 0xa1, 0x6c)
+	o = msgp.AppendUint64(o, (*z).L)
+	// string "s"
+	o = append(o, 0xa1, 0x73)
+	o = (*z).Sig.MarshalMsg(o)
+	return
+}
+
+func (_ *snarkFriendlySigslotCommit) CanMarshalMsg(z interface{}) bool {
+	_, ok := (z).(*snarkFriendlySigslotCommit)
+	return ok
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *snarkFriendlySigslotCommit) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 int
+	var zb0002 bool
+	zb0001, zb0002, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if _, ok := err.(msgp.TypeError); ok {
+		zb0001, zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).Sig.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "Sig")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			(*z).L, bts, err = msgp.ReadUint64Bytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "L")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			err = msgp.ErrTooManyArrayFields(zb0001)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array")
+				return
+			}
+		}
+	} else {
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0002 {
+			(*z) = snarkFriendlySigslotCommit{}
+		}
+		for zb0001 > 0 {
+			zb0001--
+			field, bts, err = msgp.ReadMapKeyZC(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+			switch string(field) {
+			case "s":
+				bts, err = (*z).Sig.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Sig")
+					return
+				}
+			case "l":
+				(*z).L, bts, err = msgp.ReadUint64Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "L")
+					return
+				}
+			default:
+				err = msgp.ErrNoField(string(field))
+				if err != nil {
+					err = msgp.WrapError(err)
+					return
+				}
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+func (_ *snarkFriendlySigslotCommit) CanUnmarshalMsg(z interface{}) bool {
+	_, ok := (z).(*snarkFriendlySigslotCommit)
+	return ok
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *snarkFriendlySigslotCommit) Msgsize() (s int) {
+	s = 1 + 2 + (*z).Sig.Msgsize() + 2 + msgp.Uint64Size
+	return
+}
+
+// MsgIsZero returns whether this is a zero value
+func (z *snarkFriendlySigslotCommit) MsgIsZero() bool {
 	return ((*z).Sig.MsgIsZero()) && ((*z).L == 0)
 }

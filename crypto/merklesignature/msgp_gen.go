@@ -49,6 +49,14 @@ import (
 //       |-----> (*) Msgsize
 //       |-----> (*) MsgIsZero
 //
+// SnarkFriendlySignature
+//            |-----> (*) MarshalMsg
+//            |-----> (*) CanMarshalMsg
+//            |-----> (*) UnmarshalMsg
+//            |-----> (*) CanUnmarshalMsg
+//            |-----> (*) Msgsize
+//            |-----> (*) MsgIsZero
+//
 // Verifier
 //     |-----> (*) MarshalMsg
 //     |-----> (*) CanMarshalMsg
@@ -734,6 +742,227 @@ func (z *SignerContext) Msgsize() (s int) {
 // MsgIsZero returns whether this is a zero value
 func (z *SignerContext) MsgIsZero() bool {
 	return ((*z).FirstValid == 0) && ((*z).KeyLifetime == 0) && ((*z).Tree.MsgIsZero())
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *SnarkFriendlySignature) MarshalMsg(b []byte) (o []byte) {
+	o = msgp.Require(b, z.Msgsize())
+	// omitempty: check for empty values
+	zb0001Len := uint32(6)
+	var zb0001Mask uint8 /* 8 bits */
+	if (*z).CTSignature.MsgIsZero() {
+		zb0001Len--
+		zb0001Mask |= 0x4
+	}
+	if (*z).Signature.VectorCommitmentIndex == 0 {
+		zb0001Len--
+		zb0001Mask |= 0x8
+	}
+	if (*z).Signature.Proof.MsgIsZero() {
+		zb0001Len--
+		zb0001Mask |= 0x10
+	}
+	if (*z).S1Values.MsgIsZero() {
+		zb0001Len--
+		zb0001Mask |= 0x20
+	}
+	if (*z).Signature.Signature.MsgIsZero() {
+		zb0001Len--
+		zb0001Mask |= 0x40
+	}
+	if (*z).Signature.VerifyingKey.MsgIsZero() {
+		zb0001Len--
+		zb0001Mask |= 0x80
+	}
+	// variable map header, size zb0001Len
+	o = append(o, 0x80|uint8(zb0001Len))
+	if zb0001Len != 0 {
+		if (zb0001Mask & 0x4) == 0 { // if not empty
+			// string "csig"
+			o = append(o, 0xa4, 0x63, 0x73, 0x69, 0x67)
+			o = (*z).CTSignature.MarshalMsg(o)
+		}
+		if (zb0001Mask & 0x8) == 0 { // if not empty
+			// string "idx"
+			o = append(o, 0xa3, 0x69, 0x64, 0x78)
+			o = msgp.AppendUint64(o, (*z).Signature.VectorCommitmentIndex)
+		}
+		if (zb0001Mask & 0x10) == 0 { // if not empty
+			// string "prf"
+			o = append(o, 0xa3, 0x70, 0x72, 0x66)
+			o = (*z).Signature.Proof.MarshalMsg(o)
+		}
+		if (zb0001Mask & 0x20) == 0 { // if not empty
+			// string "s1"
+			o = append(o, 0xa2, 0x73, 0x31)
+			o = (*z).S1Values.MarshalMsg(o)
+		}
+		if (zb0001Mask & 0x40) == 0 { // if not empty
+			// string "sig"
+			o = append(o, 0xa3, 0x73, 0x69, 0x67)
+			o = (*z).Signature.Signature.MarshalMsg(o)
+		}
+		if (zb0001Mask & 0x80) == 0 { // if not empty
+			// string "vkey"
+			o = append(o, 0xa4, 0x76, 0x6b, 0x65, 0x79)
+			o = (*z).Signature.VerifyingKey.MarshalMsg(o)
+		}
+	}
+	return
+}
+
+func (_ *SnarkFriendlySignature) CanMarshalMsg(z interface{}) bool {
+	_, ok := (z).(*SnarkFriendlySignature)
+	return ok
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *SnarkFriendlySignature) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 int
+	var zb0002 bool
+	zb0001, zb0002, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if _, ok := err.(msgp.TypeError); ok {
+		zb0001, zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).Signature.Signature.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "Signature")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			(*z).Signature.VectorCommitmentIndex, bts, err = msgp.ReadUint64Bytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "VectorCommitmentIndex")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).Signature.Proof.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "Proof")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).Signature.VerifyingKey.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "VerifyingKey")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).S1Values.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "S1Values")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			zb0001--
+			bts, err = (*z).CTSignature.UnmarshalMsg(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array", "CTSignature")
+				return
+			}
+		}
+		if zb0001 > 0 {
+			err = msgp.ErrTooManyArrayFields(zb0001)
+			if err != nil {
+				err = msgp.WrapError(err, "struct-from-array")
+				return
+			}
+		}
+	} else {
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		if zb0002 {
+			(*z) = SnarkFriendlySignature{}
+		}
+		for zb0001 > 0 {
+			zb0001--
+			field, bts, err = msgp.ReadMapKeyZC(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+			switch string(field) {
+			case "sig":
+				bts, err = (*z).Signature.Signature.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Signature")
+					return
+				}
+			case "idx":
+				(*z).Signature.VectorCommitmentIndex, bts, err = msgp.ReadUint64Bytes(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "VectorCommitmentIndex")
+					return
+				}
+			case "prf":
+				bts, err = (*z).Signature.Proof.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "Proof")
+					return
+				}
+			case "vkey":
+				bts, err = (*z).Signature.VerifyingKey.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "VerifyingKey")
+					return
+				}
+			case "s1":
+				bts, err = (*z).S1Values.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "S1Values")
+					return
+				}
+			case "csig":
+				bts, err = (*z).CTSignature.UnmarshalMsg(bts)
+				if err != nil {
+					err = msgp.WrapError(err, "CTSignature")
+					return
+				}
+			default:
+				err = msgp.ErrNoField(string(field))
+				if err != nil {
+					err = msgp.WrapError(err)
+					return
+				}
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+func (_ *SnarkFriendlySignature) CanUnmarshalMsg(z interface{}) bool {
+	_, ok := (z).(*SnarkFriendlySignature)
+	return ok
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *SnarkFriendlySignature) Msgsize() (s int) {
+	s = 1 + 4 + (*z).Signature.Signature.Msgsize() + 4 + msgp.Uint64Size + 4 + (*z).Signature.Proof.Msgsize() + 5 + (*z).Signature.VerifyingKey.Msgsize() + 3 + (*z).S1Values.Msgsize() + 5 + (*z).CTSignature.Msgsize()
+	return
+}
+
+// MsgIsZero returns whether this is a zero value
+func (z *SnarkFriendlySignature) MsgIsZero() bool {
+	return ((*z).Signature.Signature.MsgIsZero()) && ((*z).Signature.VectorCommitmentIndex == 0) && ((*z).Signature.Proof.MsgIsZero()) && ((*z).Signature.VerifyingKey.MsgIsZero()) && ((*z).S1Values.MsgIsZero()) && ((*z).CTSignature.MsgIsZero())
 }
 
 // MarshalMsg implements msgp.Marshaler
