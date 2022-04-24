@@ -1245,7 +1245,7 @@ func benchmarkMerkleVerify1M(b *testing.B, hashType crypto.HashType) {
 	}
 }
 
-func TestProof(t *testing.T) {
+func TestDecompressProof(t *testing.T) {
 	r := crypto.MakePRNG([]byte{0x1, 0x2})
 
 	a := make(TestArray, 5)
@@ -1263,12 +1263,12 @@ func TestProof(t *testing.T) {
 	hashes := map[uint64]crypto.Hashable{2: a[2], 3: a[3]}
 	p, err := DecompressProof(hashes, proof, 2)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{2: a[2]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{2: a[2]}, p.ToProof())
 	require.NoError(t, err)
 
 	p, err = DecompressProof(hashes, proof, 3)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{3: a[3]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{3: a[3]}, p.ToProof())
 	require.NoError(t, err)
 
 	proof, err = tree.Prove([]uint64{0, 3})
@@ -1276,12 +1276,12 @@ func TestProof(t *testing.T) {
 	hashes = map[uint64]crypto.Hashable{0: a[0], 3: a[3]}
 	p, err = DecompressProof(hashes, proof, 0)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{0: a[0]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{0: a[0]}, p.ToProof())
 	require.NoError(t, err)
 
 	p, err = DecompressProof(hashes, proof, 3)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{3: a[3]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{3: a[3]}, p.ToProof())
 	require.NoError(t, err)
 
 	proof, err = tree.Prove([]uint64{0, 1, 2, 3, 4})
@@ -1289,26 +1289,26 @@ func TestProof(t *testing.T) {
 	hashes = map[uint64]crypto.Hashable{0: a[0], 1: a[1], 2: a[2], 3: a[3], 4: a[4]}
 	p, err = DecompressProof(hashes, proof, 0)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{0: a[0]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{0: a[0]}, p.ToProof())
 	require.NoError(t, err)
 
 	p, err = DecompressProof(hashes, proof, 1)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{1: a[1]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{1: a[1]}, p.ToProof())
 	require.NoError(t, err)
 
 	p, err = DecompressProof(hashes, proof, 2)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{2: a[2]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{2: a[2]}, p.ToProof())
 	require.NoError(t, err)
 
 	p, err = DecompressProof(hashes, proof, 3)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{3: a[3]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{3: a[3]}, p.ToProof())
 	require.NoError(t, err)
 
 	p, err = DecompressProof(hashes, proof, 4)
 	require.NoError(t, err)
-	err = Verify(root, map[uint64]crypto.Hashable{4: a[4]}, p)
+	err = Verify(root, map[uint64]crypto.Hashable{4: a[4]}, p.ToProof())
 	require.NoError(t, err)
 }

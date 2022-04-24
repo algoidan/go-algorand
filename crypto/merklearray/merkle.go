@@ -410,10 +410,10 @@ func inspectRoot(root crypto.GenericDigest, pl partialLayer) error {
 	return nil
 }
 
-func DecompressProof(elems map[uint64]crypto.Hashable, proof *Proof, leafPosition uint64) (*Proof, error) {
+func DecompressProof(elems map[uint64]crypto.Hashable, proof *Proof, leafPosition uint64) (*SingleLeafProof, error) {
 	hashedLeaves, err := hashLeaves(elems, proof.TreeDepth, proof.HashFactory.NewHash())
 	if err != nil {
-		return &Proof{}, err
+		return nil, err
 	}
 
 	hints := proof.Path
@@ -451,9 +451,11 @@ func DecompressProof(elems map[uint64]crypto.Hashable, proof *Proof, leafPositio
 		leafPosition = leafPosition / 2
 	}
 
-	return &Proof{
-		Path:        proofPath,
-		HashFactory: proof.HashFactory,
-		TreeDepth:   proof.TreeDepth,
+	return &SingleLeafProof{
+		Proof: Proof{
+			Path:        proofPath,
+			HashFactory: proof.HashFactory,
+			TreeDepth:   proof.TreeDepth,
+		},
 	}, nil
 }
