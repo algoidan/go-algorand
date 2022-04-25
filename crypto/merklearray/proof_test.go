@@ -211,6 +211,41 @@ func TestProofDeserializationError(t *testing.T) {
 	a.ErrorIs(err, ErrProofLengthDigestSizeMismatch)
 }
 
+func TestPadProof(t *testing.T) {
+	partitiontest.PartitionTest(t)
+	a := require.New(t)
+
+	array := make(TestArray, 8)
+	for i := 0; i < 8; i++ {
+		crypto.RandBytes(array[i][:])
+	}
+
+	tree, err := Build(array, crypto.HashFactory{HashType: crypto.Sha512_256})
+	a.NoError(err)
+
+	p, err := tree.ProveSingleLeaf(0)
+	a.NoError(err)
+
+	paddedP := PadProofToMaxDepth(p)
+
+	a.Equal(len(paddedP), MaxEncodedTreeDepth)
+	i := uint8(0)
+
+	hash := p.HashFactory.NewHash()
+	zeroDigest := make([]byte, hash.Size())
+
+	for ; i < MaxEncodedTreeDepth-p.TreeDepth; i++ {
+		a.Equal(crypto.GenericDigest(zeroDigest), paddedP[i])
+	}
+
+	j := 0
+	for ; i < MaxEncodedTreeDepth; i++ {
+		a.Equal(p.Path[j], paddedP[i])
+		j++
+	}
+
+}
+
 func recomputePath(p *SingleLeafProof) []crypto.GenericDigest {
 	var computedPath []crypto.GenericDigest
 	proofconcat := p.GetConcatenatedProof()

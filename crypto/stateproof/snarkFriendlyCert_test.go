@@ -30,7 +30,6 @@ func TestCertToJSON(t *testing.T) {
 
 	a := require.New(t)
 
-	//for i := 0; i < 100; i++ {
 	p := generateCertForTesting(a, 4)
 	cert := p.cc
 	verif, err := MkVerifier(p.partCommitment, p.provenWeight, 4)
@@ -44,6 +43,5 @@ func TestCertToJSON(t *testing.T) {
 	//fmt.Printf(string(protocol.EncodeJSON(certenc)))
 
 	fmt.Printf(certenc.toZokCode())
-	//}
 
 }

@@ -59,6 +59,7 @@ type SingleLeafProof struct {
 // than MaxEncodedTreeDepth, array will have leading zeros (to fill the array to MaxEncodedTreeDepth * digestsize).
 // more details could be found in the Algorand's spec.
 func (p *SingleLeafProof) GetFixedLengthHashableRepresentation() []byte {
+	paddedProof := PadProofToMaxDepth(p)
 	hash := p.HashFactory.NewHash()
 
 	var binProof = make([]byte, 0, 1+(MaxEncodedTreeDepth*hash.Size()))
@@ -66,21 +67,36 @@ func (p *SingleLeafProof) GetFixedLengthHashableRepresentation() []byte {
 	proofLenByte := p.TreeDepth
 	binProof = append(binProof, proofLenByte)
 
-	zeroDigest := make([]byte, hash.Size())
-
-	for i := uint8(0); i < (MaxEncodedTreeDepth - proofLenByte); i++ {
-		binProof = append(binProof, zeroDigest...)
-	}
-
-	for i := uint8(0); i < proofLenByte; i++ {
-		if i < proofLenByte && p.Path[i] != nil {
-			binProof = append(binProof, p.Path[i]...)
-		} else {
-			binProof = append(binProof, zeroDigest...)
-		}
+	for i := uint8(0); i < MaxEncodedTreeDepth; i++ {
+		binProof = append(binProof, paddedProof[i]...)
 	}
 
 	return binProof
+}
+
+// PadProofToMaxDepth creates a copy of the proof in which the Path element
+// would have length of MaxEncodedTreeDepth. The function fills the path with leading zero slices
+// e.g: MaxEncodedTreeDepth=16
+// [p0,p1,...p13] -> [nil,nil,p0...p13]
+func PadProofToMaxDepth(p *SingleLeafProof) []crypto.GenericDigest {
+	newPath := make([]crypto.GenericDigest, 0, MaxEncodedTreeDepth)
+
+	hash := p.HashFactory.NewHash()
+	zeroDigest := make([]byte, hash.Size())
+	for i := uint8(0); i < (MaxEncodedTreeDepth - p.TreeDepth); i++ {
+		newPath = append(newPath, zeroDigest)
+	}
+
+	for i := uint8(0); i < p.TreeDepth; i++ {
+		if p.Path[i] != nil {
+			newPath = append(newPath, p.Path[i])
+		} else {
+			newPath = append(newPath, zeroDigest)
+		}
+	}
+
+	return newPath
+
 }
 
 // ToProof export a Proof from a SingleProof. The result is
