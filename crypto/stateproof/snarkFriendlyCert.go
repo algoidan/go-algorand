@@ -18,6 +18,9 @@ package compactcert
 
 import (
 	"fmt"
+	"os"
+
+	"text/template"
 
 	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/crypto/merklearray"
@@ -79,16 +82,22 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 		if err != nil {
 			return nil, err
 		}
+		paddedMssProof := merklearray.PadProofToMaxDepth(&reveal.SigSlot.Sig.Proof)
+		sigWithHints.Proof.Path = paddedMssProof
 
 		singleSigProof, err := merklearray.DecompressProof(sigs, &c.SigProofs, position)
 		if err != nil {
 			return nil, err
 		}
+		paddedSigProof := merklearray.PadProofToMaxDepth(singleSigProof)
+		singleSigProof.Path = paddedSigProof
 
 		singlePartProof, err := merklearray.DecompressProof(parts, &c.PartProofs, position)
 		if err != nil {
 			return nil, err
 		}
+		paddedPartProof := merklearray.PadProofToMaxDepth(singlePartProof)
+		singlePartProof.Path = paddedPartProof
 
 		sigSlot := snarkFriendlySigslotCommit{L: reveal.SigSlot.L, Sig: sigWithHints}
 		reveals = append(reveals, snarkFriendlyReveal{
@@ -105,4 +114,28 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 		MerkleSignatureSaltVersion: c.MerkleSignatureSaltVersion,
 		Reveals:                    reveals,
 	}, nil
+}
+
+func (c *snarkFriendlyCert) toZokCode() string {
+	// mss signature
+	var sigTemplate = ` Sig{
+		index: {{.Signature.VectorCommitmentIndex}},
+		ephemeral_falcon_pk: {{.Signature.VerifyingKey.PublicKey}},
+		proof: Proof{
+					digests: {{.Signature.Proof.Proof.Path}}
+					depth: {{.Signature.Proof.Proof.TreeDepth}}
+				},
+		falcon_ct_sig: {{.CTSignature}},
+		s1_hint: {{.S1Values}},
+	}`
+
+	t, err := template.New("todos").Parse(sigTemplate)
+	if err != nil {
+		panic(err)
+	}
+	err = t.Execute(os.Stdout, c.Reveals[0].SigSlot.Sig)
+	if err != nil {
+		panic(err)
+	}
+	return ""
 }

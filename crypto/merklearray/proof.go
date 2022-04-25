@@ -20,7 +20,11 @@ import (
 	"fmt"
 
 	"github.com/algorand/go-algorand/crypto"
+	"github.com/algorand/go-algorand/util"
+	"strings"
 )
+
+type ProofPath []crypto.GenericDigest
 
 // Proof is used to convince a verifier about membership of leaves: h0,h1...hn
 // at indexes i0,i1...in on a tree. The verifier has a trusted value of the tree
@@ -31,8 +35,8 @@ type Proof struct {
 	// Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
 	// given the distribution of the elt positions and the depth of the tree,
 	// the path length can increase up to 2^MaxEncodedTreeDepth / 2
-	Path        []crypto.GenericDigest `codec:"pth,allocbound=MaxNumLeavesOnEncodedTree/2"`
-	HashFactory crypto.HashFactory     `codec:"hsh"`
+	Path        ProofPath          `codec:"pth,allocbound=MaxNumLeavesOnEncodedTree/2"`
+	HashFactory crypto.HashFactory `codec:"hsh"`
 	// TreeDepth represents the depth of the tree that is being proven.
 	// It is the number of edges from the root to a leaf.
 	TreeDepth uint8 `codec:"td"`
@@ -97,6 +101,22 @@ func (p *SingleLeafProof) GetConcatenatedProof() []byte {
 		}
 	}
 	return proofconcat
+}
+func (p ProofPath) String() string {
+	builder := strings.Builder{}
+	builder.WriteString("[")
+	if len(p) == 0 {
+		builder.WriteString("]")
+		return builder.String()
+	}
+	i := 0
+	for ; i < len(p)-1; i++ {
+		builder.WriteString(util.ToCommaSeparatedString(p[i]))
+		builder.WriteString(",")
+	}
+	builder.WriteString(util.ToCommaSeparatedString(p[i]))
+	builder.WriteString("]")
+	return builder.String()
 }
 
 // ProofDataToSingleLeafProof receives serialized proof data and uses it to construct a proof object.

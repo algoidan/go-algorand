@@ -18,6 +18,8 @@ package crypto
 
 import (
 	cfalcon "github.com/algoidan/falcon"
+	
+	"github.com/algorand/go-algorand/util"
 )
 
 const (
@@ -153,4 +155,12 @@ func GetSignatureAuxiliaryData(d *FalconVerifier, data []byte, sig FalconSignatu
 		return FalconS1Coefficients{}, FalconCTSignature{}, err
 	}
 	return s1, FalconCTSignature(ctSignature), nil
+}
+
+func (sig FalconCTSignature) String() string {
+	return util.ToCommaSeparatedString(sig[:])
+}
+
+func (pk FalconPublicKey) String() string {
+	return util.ToCommaSeparatedString(pk[:])
 }

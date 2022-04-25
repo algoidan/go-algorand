@@ -22,7 +22,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/algorand/go-algorand/protocol"
 	"github.com/algorand/go-algorand/test/partitiontest"
 )
 
@@ -31,6 +30,7 @@ func TestCertToJSON(t *testing.T) {
 
 	a := require.New(t)
 
+	//for i := 0; i < 100; i++ {
 	p := generateCertForTesting(a, 4)
 	cert := p.cc
 	verif, err := MkVerifier(p.partCommitment, p.provenWeight, 4)
@@ -41,10 +41,9 @@ func TestCertToJSON(t *testing.T) {
 
 	certenc, err := cert.createSnarkFriendlyCert(p.data[:])
 	a.NoError(err)
-	fmt.Printf(string(protocol.EncodeJSON(certenc)))
-	//var x map[string]interface{}
-	//
-	//json.Unmarshal([]byte(string(protocol.EncodeJSON(certenc))), &x)
-	//fmt.Print(x)
+	//fmt.Printf(string(protocol.EncodeJSON(certenc)))
+
+	fmt.Printf(certenc.toZokCode())
+	//}
 
 }
