@@ -16,7 +16,11 @@
 
 package crypto
 
-import "bytes"
+import (
+	"bytes"
+	
+	"github.com/algorand/go-algorand/util"
+)
 
 // GenericDigest is a digest that implements CustomSizeDigest, and can be used as hash output.
 //msgp:allocbound GenericDigest MaxHashDigestSize
@@ -33,4 +37,8 @@ func (d GenericDigest) IsEqual(other GenericDigest) bool {
 // IsEmpty checks wether the generic digest is an empty one or not
 func (d GenericDigest) IsEmpty() bool {
 	return len(d) == 0
+}
+
+func (d GenericDigest) String() string {
+	return util.ToCommaSeparatedString(d)
 }

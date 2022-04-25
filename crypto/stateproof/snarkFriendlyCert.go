@@ -117,41 +117,51 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 }
 
 func (c *snarkFriendlyCert) toZokCode() string {
-
-	var sigTemplate = ` Reveal{
-		index: {{.Position}},
-		participant: Participant {
-				weight: {{.Part.Weight}},
-				pk_mss: {{.Part.PK}},
-			},
-		sigslot: SignatureSlot {
-				L: {{.SigSlot.L}},
-				mss_signature: Sig {
-					index: {{.SigSlot.Sig.Signature.VectorCommitmentIndex}},
-					ephemeral_falcon_pk: {{.SigSlot.Sig.Signature.VerifyingKey.PublicKey}},
-					proof: Proof {
-						digests: {{.SigSlot.Sig.Signature.Proof.Proof.Path}},
-						depth: {{.SigSlot.Sig.Signature.Proof.Proof.TreeDepth}},
-					},
-					falcon_ct_sig: {{.SigSlot.Sig.CTSignature}},
-					s1_hint: {{.SigSlot.Sig.S1Values}},
-				}
-			},
-		proof_participant: Proof {
-				digests: {{.PartProof.Path}},
-				depth: {{.PartProof.TreeDepth}},
-			},
-		proof_sigslot: Proof {
-				digests: {{.SigProof.Path}},
-				depth: {{.SigProof.TreeDepth}},
-			},
+	var sigTemplate = ` 
+	StateProof {
+		salt_version: {{.MerkleSignatureSaltVersion}},
+		round: ?????,
+		data_hash: [?????],
+		vc_signatures: {{.SigCommit}} 
+		signed_weight: {{.SignedWeight}},
+		num_reveals: {{len .Reveals}}
+		reveals: [{{ with .Reveals }}{{ range . }}
+		Reveal {
+			index: {{.Position}},
+			participant: Participant {
+					weight: {{.Part.Weight}},
+					pk_mss: {{.Part.PK}},
+				},
+			sigslot: SignatureSlot {
+					L: {{.SigSlot.L}},
+					mss_signature: Sig {
+						index: {{.SigSlot.Sig.Signature.VectorCommitmentIndex}},
+						ephemeral_falcon_pk: {{.SigSlot.Sig.Signature.VerifyingKey.PublicKey}},
+						proof: Proof {
+							digests: {{.SigSlot.Sig.Signature.Proof.Proof.Path}},
+							depth: {{.SigSlot.Sig.Signature.Proof.Proof.TreeDepth}},
+						},
+						falcon_ct_sig: {{.SigSlot.Sig.CTSignature}},
+						s1_hint: {{.SigSlot.Sig.S1Values}},
+					}
+				},
+			proof_participant: Proof {
+					digests: {{.PartProof.Path}},
+					depth: {{.PartProof.TreeDepth}},
+				},
+			proof_sigslot: Proof {
+					digests: {{.SigProof.Path}},
+					depth: {{.SigProof.TreeDepth}},
+				},
+		},
+		{{ end }}{{ end }}]
 	}`
 
 	t, err := template.New("todos").Parse(sigTemplate)
 	if err != nil {
 		panic(err)
 	}
-	err = t.Execute(os.Stdout, c.Reveals[0])
+	err = t.Execute(os.Stdout, c)
 	if err != nil {
 		panic(err)
 	}

@@ -17,8 +17,8 @@
 package crypto
 
 import (
+	"encoding/json"
 	cfalcon "github.com/algoidan/falcon"
-	
 	"github.com/algorand/go-algorand/util"
 )
 
@@ -163,4 +163,9 @@ func (sig FalconCTSignature) String() string {
 
 func (pk FalconPublicKey) String() string {
 	return util.ToCommaSeparatedString(pk[:])
+}
+
+func (s1 FalconS1Coefficients) String() string {
+	str, _ := json.Marshal(s1)
+	return string(str)
 }
