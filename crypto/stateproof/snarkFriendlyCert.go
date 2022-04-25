@@ -117,23 +117,41 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 }
 
 func (c *snarkFriendlyCert) toZokCode() string {
-	// mss signature
-	var sigTemplate = ` Sig{
-		index: {{.Signature.VectorCommitmentIndex}},
-		ephemeral_falcon_pk: {{.Signature.VerifyingKey.PublicKey}},
-		proof: Proof{
-					digests: {{.Signature.Proof.Proof.Path}}
-					depth: {{.Signature.Proof.Proof.TreeDepth}}
-				},
-		falcon_ct_sig: {{.CTSignature}},
-		s1_hint: {{.S1Values}},
+
+	var sigTemplate = ` Reveal{
+		index: {{.Position}},
+		participant: Participant {
+				weight: {{.Part.Weight}},
+				pk_mss: {{.Part.PK}},
+			},
+		sigslot: SignatureSlot {
+				L: {{.SigSlot.L}},
+				mss_signature: Sig {
+					index: {{.SigSlot.Sig.Signature.VectorCommitmentIndex}},
+					ephemeral_falcon_pk: {{.SigSlot.Sig.Signature.VerifyingKey.PublicKey}},
+					proof: Proof {
+						digests: {{.SigSlot.Sig.Signature.Proof.Proof.Path}},
+						depth: {{.SigSlot.Sig.Signature.Proof.Proof.TreeDepth}},
+					},
+					falcon_ct_sig: {{.SigSlot.Sig.CTSignature}},
+					s1_hint: {{.SigSlot.Sig.S1Values}},
+				}
+			},
+		proof_participant: Proof {
+				digests: {{.PartProof.Path}},
+				depth: {{.PartProof.TreeDepth}},
+			},
+		proof_sigslot: Proof {
+				digests: {{.SigProof.Path}},
+				depth: {{.SigProof.TreeDepth}},
+			},
 	}`
 
 	t, err := template.New("todos").Parse(sigTemplate)
 	if err != nil {
 		panic(err)
 	}
-	err = t.Execute(os.Stdout, c.Reveals[0].SigSlot.Sig)
+	err = t.Execute(os.Stdout, c.Reveals[0])
 	if err != nil {
 		panic(err)
 	}

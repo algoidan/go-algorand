@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/algorand/go-algorand/util"
 
 	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/crypto/merklearray"
@@ -318,6 +319,10 @@ func (s *Signature) GetFixedLengthHashableRepresentation() ([]byte, error) {
 	merkleSignatureBytes = append(merkleSignatureBytes, binaryVectorCommitmentIndex...)
 	merkleSignatureBytes = append(merkleSignatureBytes, proofBytes...)
 	return merkleSignatureBytes, nil
+}
+
+func (v Verifier) String() string {
+	return util.ToCommaSeparatedString(v[:])
 }
 
 // SnarkFriendlySignature is an extension for the merkle signature scheme.
