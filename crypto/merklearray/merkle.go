@@ -410,6 +410,20 @@ func inspectRoot(root crypto.GenericDigest, pl partialLayer) error {
 	return nil
 }
 
+func DecompressProofVC(elems map[uint64]crypto.Hashable, proof *Proof, leafPosition uint64) (*SingleLeafProof, error) {
+	idx, err := merkleTreeToVectorCommitmentIndex(leafPosition, proof.TreeDepth)
+	if err != nil {
+		return nil, err
+	}
+
+	msbIndexedElements, err := convertIndexes(elems, proof.TreeDepth)
+	if err != nil {
+		return nil, err
+	}
+
+	return DecompressProof(msbIndexedElements, proof, idx)
+}
+
 func DecompressProof(elems map[uint64]crypto.Hashable, proof *Proof, leafPosition uint64) (*SingleLeafProof, error) {
 	hashedLeaves, err := hashLeaves(elems, proof.TreeDepth, proof.HashFactory.NewHash())
 	if err != nil {

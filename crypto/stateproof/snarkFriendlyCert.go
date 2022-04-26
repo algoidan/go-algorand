@@ -85,14 +85,14 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 		paddedMssProof := merklearray.PadProofToMaxDepth(&reveal.SigSlot.Sig.Proof)
 		sigWithHints.Proof.Path = paddedMssProof
 
-		singleSigProof, err := merklearray.DecompressProof(sigs, &c.SigProofs, position)
+		singleSigProof, err := merklearray.DecompressProofVC(sigs, &c.SigProofs, position)
 		if err != nil {
 			return nil, err
 		}
 		paddedSigProof := merklearray.PadProofToMaxDepth(singleSigProof)
 		singleSigProof.Path = paddedSigProof
 
-		singlePartProof, err := merklearray.DecompressProof(parts, &c.PartProofs, position)
+		singlePartProof, err := merklearray.DecompressProofVC(parts, &c.PartProofs, position)
 		if err != nil {
 			return nil, err
 		}
