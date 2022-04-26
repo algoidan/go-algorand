@@ -8,15 +8,12 @@ import (
 func ToCommaSeparatedString(b []byte) string {
 	builder := strings.Builder{}
 	builder.WriteString("[")
-	if len(b) == 0 {
-		builder.WriteString("]")
-		return builder.String()
+	for i := 0; i < len(b); i++ {
+		if i != 0 {
+			builder.WriteString(",")
+		}
+		builder.WriteString(fmt.Sprintf("0x%02x", b[i]))
 	}
-	i := 0
-	for ; i < len(b)-1; i++ {
-		builder.WriteString(fmt.Sprintf("0x%x,", b[i]))
-	}
-	builder.WriteString(fmt.Sprintf("0x%x", b[i]))
 	builder.WriteString("]")
 	return builder.String()
 }

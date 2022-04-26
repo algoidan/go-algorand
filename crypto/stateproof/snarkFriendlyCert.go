@@ -117,15 +117,13 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 }
 
 func (c *snarkFriendlyCert) toZokCode() string {
-	var sigTemplate = ` 
-	StateProof {
+	// todo use the consts
+	var sigTemplate = `StateProof<16,16,1024> s =  StateProof {
 		salt_version: {{.MerkleSignatureSaltVersion}},
-		round: ?????,
-		data_hash: [?????],
-		vc_signatures: {{.SigCommit}} 
 		signed_weight: {{.SignedWeight}},
-		num_reveals: {{len .Reveals}}
-		reveals: [{{ with .Reveals }}{{ range . }}
+		vc_signatures: {{.SigCommit}},
+		num_reveals: {{len .Reveals}},
+		reveals: [{{ range $index, $element := .Reveals}}{{if $index}},{{end}}
 		Reveal {
 			index: {{.Position}},
 			participant: Participant {
@@ -153,11 +151,10 @@ func (c *snarkFriendlyCert) toZokCode() string {
 					digests: {{.SigProof.Path}},
 					depth: {{.SigProof.TreeDepth}},
 				},
-		},
-		{{ end }}{{ end }}]
+		}{{ end }}],
 	}`
 
-	t, err := template.New("todos").Parse(sigTemplate)
+	t, err := template.New("zok").Parse(sigTemplate)
 	if err != nil {
 		panic(err)
 	}
