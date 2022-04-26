@@ -68,14 +68,14 @@ func verifyWeights(signedWeight uint64, lnProvenWeight uint64, numOfReveals uint
 	}
 
 	// in order to make the code more readable and reusable we will define the following expressions:
-	// y = signedWeight^2 + 2^(d + 2) * signedWeight + 2^2d
+	// y = signedWeight^2 + 2^(d +2) * signedWeight + 2^2d
 	// x = 3 * 2^b * (signedWeight^2 - 2^2d)
 	// w = d * (T - 1)
 	//
 	//  numReveals * (3 * 2^b * (signedWeight^2 - 2^2d) + d * (T-1) * Y) >= ((strengthTarget) * T + numReveals * P) * Y
 	//        /\
 	//        ||
-	//		  \/
+	//        \/
 	// numReveals * (x + w * Y) >= ((strengthTarget) * T + numReveals * P) * Y
 	y, x, w := getSubExpressions(signedWeight)
 	lhs := &big.Int{}
@@ -113,7 +113,7 @@ func numReveals(signedWeight uint64, lnProvenWeight uint64, strengthTarget uint6
 	//  numReveals * (3 * 2^b * (signedWeight^2 - 2^2d) + d * (T-1) * Y) >= ((strengthTarget) * T + numReveals * P) * Y
 	//        /\
 	//        ||
-	//		  \/
+	//	  \/
 	// numReveals * (x + w * Y) >= ((strengthTarget) * T + numReveals * P) * Y
 	y, x, w := getSubExpressions(signedWeight)
 

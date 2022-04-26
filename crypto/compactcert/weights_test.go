@@ -17,6 +17,7 @@
 package compactcert
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -215,4 +216,24 @@ func BenchmarkNumReveals(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		numReveals(signedWeight, lnProvenWt, strengthTarget)
 	}
+}
+
+func TestLnIntApproximation(t *testing.T) {
+	xRes := uint64(0)
+	for x := uint64(2); x < 1000000000; x++ {
+		res, err := lnIntApproximation(x)
+		require.NoError(t, err)
+		if xRes >= res {
+			if xRes == res {
+				//				fmt.Printf("x: %d xRes: %d res: %d\n", x, xRes, res)
+			} else {
+				fmt.Printf("x: %d xRes: %d res: %d **********\n", x, xRes, res)
+			}
+		} else {
+			require.Less(t, xRes, res)
+
+		}
+		xRes = res
+	}
+
 }
