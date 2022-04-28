@@ -17,8 +17,8 @@
 package compactcert
 
 import (
+	"bytes"
 	"fmt"
-	"os"
 
 	"text/template"
 
@@ -26,6 +26,7 @@ import (
 	"github.com/algorand/go-algorand/crypto/merklearray"
 	"github.com/algorand/go-algorand/crypto/merklesignature"
 	"github.com/algorand/go-algorand/data/basics"
+	"github.com/algorand/go-algorand/util"
 )
 
 type snarkFriendlySigslotCommit struct {
@@ -116,9 +117,9 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 	}, nil
 }
 
-func (c *snarkFriendlyCert) toZokCode() string {
+func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data StateProofMessageHash, round int64) string {
 	// todo use the consts
-	var sigTemplate = `StateProof<16,16,1024> s =  StateProof {
+	var stateproof = `StateProof<4,4,8> s =  StateProof {
 		salt_version: {{.MerkleSignatureSaltVersion}},
 		signed_weight: {{.SignedWeight}},
 		vc_signatures: {{.SigCommit}},
@@ -152,15 +153,30 @@ func (c *snarkFriendlyCert) toZokCode() string {
 					depth: {{.SigProof.TreeDepth}},
 				},
 		}{{ end }}],
-	}`
+	}
+`
 
-	t, err := template.New("zok").Parse(sigTemplate)
+	buf := bytes.NewBufferString("")
+	stateproofTemplate, err := template.New("stateproof").Parse(stateproof)
 	if err != nil {
 		panic(err)
 	}
-	err = t.Execute(os.Stdout, c)
+	err = stateproofTemplate.Execute(buf, c)
 	if err != nil {
 		panic(err)
 	}
-	return ""
+	buf.WriteString(fmt.Sprintf("field round = %d\n", round))
+	buf.WriteString(fmt.Sprintf("u8[DATA_LEN] data = %v\n", util.ToCommaSeparatedString(data[:])))
+	var veriferTemplate = `field P = {{.LnProvenWeight}}
+field target = {{.StrengthTarget}}
+u8[MT_VC_COMMITMENT_LEN] vc_participants = {{.ParticipantsCommitment}}`
+	stateproofTemplate, err = template.New("verifer").Parse(veriferTemplate)
+	if err != nil {
+		panic(err)
+	}
+	err = stateproofTemplate.Execute(buf, verifier)
+	if err != nil {
+		panic(err)
+	}
+	return buf.String()
 }

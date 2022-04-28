@@ -41,6 +41,6 @@ func TestCertToJSON(t *testing.T) {
 	certenc, err := cert.createSnarkFriendlyCert(p.data[:])
 	a.NoError(err)
 
-	fmt.Printf(certenc.toZokCode())
+	fmt.Printf(toZokCode(certenc, verif, testMessage("hello world").IntoStateProofMessageHash(), compactCertRoundsForTests))
 
 }

@@ -33,9 +33,9 @@ var (
 
 // Verifier is used to verify a state proof. those fields represent all the verifier's trusted data
 type Verifier struct {
-	strengthTarget         uint64
-	lnProvenWeight         uint64 // ln(provenWeight) as integer with 16 bits of precision
-	participantsCommitment crypto.GenericDigest
+	StrengthTarget         uint64
+	LnProvenWeight         uint64 // ln(provenWeight) as integer with 16 bits of precision
+	ParticipantsCommitment crypto.GenericDigest
 }
 
 // MkVerifier constructs a verifier to check the state proof. the arguments for this function
@@ -47,9 +47,9 @@ func MkVerifier(partcom crypto.GenericDigest, provenWeight uint64, strengthTarge
 	}
 
 	return &Verifier{
-		strengthTarget:         strengthTarget,
-		lnProvenWeight:         lnProvenWt,
-		participantsCommitment: partcom,
+		StrengthTarget:         strengthTarget,
+		LnProvenWeight:         lnProvenWt,
+		ParticipantsCommitment: partcom,
 	}, nil
 }
 
