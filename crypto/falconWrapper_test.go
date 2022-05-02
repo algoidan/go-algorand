@@ -17,7 +17,7 @@
 package crypto
 
 import (
-	"github.com/algoidan/falcon"
+	"github.com/algorand/falcon"
 	"github.com/algorand/go-algorand/test/partitiontest"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -147,6 +147,6 @@ func TestFalconCoefficients(t *testing.T) {
 	ctSig2, err := sig.GetFixedLengthHashableRepresentation()
 	a.NoError(err)
 
-	a.Equal(ctSig, ctSig2)
+	a.Equal(ctSig[:], ctSig2)
 
 }

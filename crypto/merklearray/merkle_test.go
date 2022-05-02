@@ -255,7 +255,7 @@ func TestMerkleProveEdgeCases(t *testing.T) {
 	// prove on nothing - now the tree is empty as well
 	proof, err = tree.Prove(nil)
 	a.NoError(err)
-	a.Equal(proof.Path, []crypto.GenericDigest(nil))
+	a.Equal(proof.Path, ProofPath(nil))
 	a.Equal(proof.TreeDepth, uint8(0))
 }
 
@@ -297,7 +297,7 @@ func TestMerkleVCProveEdgeCases(t *testing.T) {
 	// prove on nothing - now the tree is empty as well
 	proof, err = tree.Prove(nil)
 	a.NoError(err)
-	a.Equal(proof.Path, []crypto.GenericDigest(nil))
+	a.Equal(proof.Path, ProofPath(nil))
 	a.Equal(proof.TreeDepth, uint8(0))
 }
 

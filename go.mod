@@ -3,7 +3,7 @@ module github.com/algorand/go-algorand
 go 1.17
 
 require (
-	github.com/algoidan/falcon v0.0.0-20220419154947-e73be27cd3fb
+	github.com/algorand/falcon v0.0.0-20220502155100-9558ec1e8b01
 	github.com/algorand/go-codec/codec v1.1.8
 	github.com/algorand/go-deadlock v0.2.2
 	github.com/algorand/go-sumhash v0.1.0
