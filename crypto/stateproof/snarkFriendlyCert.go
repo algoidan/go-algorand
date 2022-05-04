@@ -19,7 +19,6 @@ package compactcert
 import (
 	"bytes"
 	"fmt"
-
 	"text/template"
 
 	"github.com/algorand/go-algorand/crypto"
@@ -119,7 +118,13 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 
 func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data StateProofMessageHash, round int64) string {
 	// todo use the consts
-	var stateproof = `StateProof<4,4,8> s =  StateProof {
+	var stateproof = `
+from "./state-proof.zok" import StateProof, Reveal, SignatureSlot, Participant, state_proof_verify, DATA_LEN
+from "../mss/mss" import Sig
+from "../merkle/mt-vc" import Proof, MT_VC_COMMITMENT_LEN
+
+def main() -> bool:
+	StateProof<4,4,{{len .Reveals}}> state_proof =  StateProof {
 		salt_version: {{.MerkleSignatureSaltVersion}},
 		signed_weight: {{.SignedWeight}},
 		vc_signatures: {{.SigCommit}},
@@ -138,7 +143,7 @@ func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data StateProofMessageH
 						ephemeral_falcon_pk: {{.SigSlot.Sig.Signature.VerifyingKey.PublicKey}},
 						proof: Proof {
 							digests: {{.SigSlot.Sig.Signature.Proof.Proof.Path}},
-							depth: {{.SigSlot.Sig.Signature.Proof.Proof.TreeDepth}},
+							leaf_depth: {{.SigSlot.Sig.Signature.Proof.Proof.TreeDepth}},
 						},
 						falcon_ct_sig: {{.SigSlot.Sig.CTSignature}},
 						s1_hint: {{.SigSlot.Sig.S1Values}},
@@ -146,11 +151,11 @@ func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data StateProofMessageH
 				},
 			proof_participant: Proof {
 					digests: {{.PartProof.Path}},
-					depth: {{.PartProof.TreeDepth}},
+					leaf_depth: {{.PartProof.TreeDepth}},
 				},
 			proof_sigslot: Proof {
 					digests: {{.SigProof.Path}},
-					depth: {{.SigProof.TreeDepth}},
+					leaf_depth: {{.SigProof.TreeDepth}},
 				},
 		}{{ end }}],
 	}
@@ -165,11 +170,16 @@ func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data StateProofMessageH
 	if err != nil {
 		panic(err)
 	}
-	buf.WriteString(fmt.Sprintf("field round = %d\n", round))
-	buf.WriteString(fmt.Sprintf("u8[DATA_LEN] data = %v\n", util.ToCommaSeparatedString(data[:])))
-	var veriferTemplate = `field P = {{.LnProvenWeight}}
-field target = {{.StrengthTarget}}
-u8[MT_VC_COMMITMENT_LEN] vc_participants = {{.ParticipantsCommitment}}`
+	buf.WriteString(fmt.Sprintf("	u64 round = %d\n", round))
+	buf.WriteString(fmt.Sprintf("	u8[DATA_LEN] data = %v\n", util.ToCommaSeparatedString(data[:])))
+	var veriferTemplate = `
+	field P = {{.LnProvenWeight}}
+	field target = {{.StrengthTarget}}
+	u8[MT_VC_COMMITMENT_LEN] vc_participants = {{.ParticipantsCommitment}}
+
+	assert(state_proof_verify(vc_participants,P,target,round,data,state_proof)==true)
+	return true
+`
 	stateproofTemplate, err = template.New("verifer").Parse(veriferTemplate)
 	if err != nil {
 		panic(err)

@@ -38,9 +38,16 @@ import (
 
 type testMessage []byte
 
-func (m testMessage) IntoStateProofMessageHash() MessageHash {
-	hsh := MessageHash{}
-	copy(hsh[:], m)
+// ToBeHashed returns the bytes of the message.
+func (m testMessage) ToBeHashed() (protocol.HashID, []byte) {
+	return protocol.TestHashable, m
+}
+
+func (m testMessage) IntoStateProofMessageHash() StateProofMessageHash {
+	digest := crypto.GenericHashObj(crypto.HashFactory{HashType: StateProofMessageHashType}.NewHash(), m)
+
+	hsh := StateProofMessageHash{}
+	copy(hsh[:], digest)
 	return hsh
 }
 
