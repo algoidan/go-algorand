@@ -1,5 +1,5 @@
-github.com/algorand/falcon v0.0.0-20220502155100-9558ec1e8b01 h1:POSnLaOQMQiVEZECXmU/3klYJ3djh3lvkbs6d3DV0NY=
-github.com/algorand/falcon v0.0.0-20220502155100-9558ec1e8b01/go.mod h1:OkQyHlGvS0kLNcIWbC21/uQcnbfwSOQm+wiqWwBG9pQ=
+github.com/algorand/falcon v0.0.0-20220503173049-e76ef73efb1c h1:wiwt8GvMehQP0BYlTLoNr2SxeBeZ7tw4KMqN4+66Zhk=
+github.com/algorand/falcon v0.0.0-20220503173049-e76ef73efb1c/go.mod h1:OkQyHlGvS0kLNcIWbC21/uQcnbfwSOQm+wiqWwBG9pQ=
 github.com/algorand/go-codec v1.1.8 h1:XDSreeeZY8gMst6Edz4RBkl08/DGMJOeHYkoXL2B7wI=
 github.com/algorand/go-codec v1.1.8/go.mod h1:XhzVs6VVyWMLu6cApb9/192gBjGRVGm5cX5j203Heg4=
 github.com/algorand/go-codec/codec v1.1.8 h1:lsFuhcOH2LiEhpBH3BVUUkdevVmwCRyvb7FCAAPeY6U=
