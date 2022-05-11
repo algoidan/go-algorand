@@ -119,9 +119,13 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data StateProofMessageHash, round int64) string {
 	// todo use the consts
 	var stateproof = `
-from "./state-proof.zok" import StateProof, Reveal, SignatureSlot, Participant, state_proof_verify, DATA_LEN
+from "./state-proof.zok" import StateProof, Reveal, SignatureSlot, Participant, state_proof_verify
 from "../mss/mss" import Sig
 from "../merkle/mt-vc" import Proof, MT_VC_COMMITMENT_LEN
+
+
+const u32 MAX_REVEALS = 5
+const u32 DATA_LEN = 32
 
 def main() -> bool:
 	StateProof<4,4,{{len .Reveals}}> state_proof =  StateProof {
