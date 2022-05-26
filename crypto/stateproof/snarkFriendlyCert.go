@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with go-algorand.  If not, see <https://www.gnu.org/licenses/>.
 
-package compactcert
+package stateproof
 
 import (
 	"bytes"
@@ -54,14 +54,14 @@ type snarkFriendlyCert struct {
 	Reveals                    []snarkFriendlyReveal `codec:"r,allocbound=MaxReveals"`
 }
 
-func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) {
+func (s *StateProof) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) {
 	newData := make([]byte, len(data))
 	copy(newData, data)
 
 	sigs := make(map[uint64]crypto.Hashable)
 	parts := make(map[uint64]crypto.Hashable)
 
-	for pos, r := range c.Reveals {
+	for pos, r := range s.Reveals {
 		sig, err := buildCommittableSignature(r.SigSlot)
 		if err != nil {
 			return nil, err
@@ -71,10 +71,10 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 		parts[pos] = r.Part
 	}
 
-	reveals := make([]snarkFriendlyReveal, 0, len(c.PositionsToReveal))
-	for i := 0; i < len(c.PositionsToReveal); i++ {
-		position := c.PositionsToReveal[i]
-		reveal, ok := c.Reveals[position]
+	reveals := make([]snarkFriendlyReveal, 0, len(s.PositionsToReveal))
+	for i := 0; i < len(s.PositionsToReveal); i++ {
+		position := s.PositionsToReveal[i]
+		reveal, ok := s.Reveals[position]
 		if !ok {
 			return nil, fmt.Errorf("could not find position on reveals map")
 		}
@@ -85,14 +85,14 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 		paddedMssProof := merklearray.PadProofToMaxDepth(&reveal.SigSlot.Sig.Proof)
 		sigWithHints.Proof.Path = paddedMssProof
 
-		singleSigProof, err := merklearray.DecompressProofVC(sigs, &c.SigProofs, position)
+		singleSigProof, err := merklearray.DecompressProofVC(sigs, &s.SigProofs, position)
 		if err != nil {
 			return nil, err
 		}
 		paddedSigProof := merklearray.PadProofToMaxDepth(singleSigProof)
 		singleSigProof.Path = paddedSigProof
 
-		singlePartProof, err := merklearray.DecompressProofVC(parts, &c.PartProofs, position)
+		singlePartProof, err := merklearray.DecompressProofVC(parts, &s.PartProofs, position)
 		if err != nil {
 			return nil, err
 		}
@@ -109,17 +109,17 @@ func (c *Cert) createSnarkFriendlyCert(data []byte) (*snarkFriendlyCert, error) 
 	}
 
 	return &snarkFriendlyCert{
-		SigCommit:                  c.SigCommit,
-		SignedWeight:               c.SignedWeight,
-		MerkleSignatureSaltVersion: c.MerkleSignatureSaltVersion,
+		SigCommit:                  s.SigCommit,
+		SignedWeight:               s.SignedWeight,
+		MerkleSignatureSaltVersion: s.MerkleSignatureSaltVersion,
 		Reveals:                    reveals,
 	}, nil
 }
 
-func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data StateProofMessageHash, round int64) string {
+func toZokCode(c *snarkFriendlyCert, verifier *Verifier, data MessageHash, round int64) string {
 	// todo use the consts
 	var stateproof = `
-from "./state-proof.zok" import StateProof, Reveal, SignatureSlot, Participant, state_proof_verify
+from "./state-proof.zok" import StateProof, Reveal, PublicKey, SignatureSlot, Participant, state_proof_verify
 from "../mss/mss" import Sig
 from "../merkle/mt-vc" import Proof, MT_VC_COMMITMENT_LEN
 
@@ -138,7 +138,10 @@ def main() -> bool:
 			index: {{.Position}},
 			participant: Participant {
 					weight: {{.Part.Weight}},
-					pk_mss: {{.Part.PK}},
+					pk_mss: PublicKey {
+							lifetime_ephemeral_pks: {{.Part.PK.KeyLifetime}}, 
+							vc_ephemeral_pks: {{.Part.PK.Commitment}},
+					}
 				},
 			sigslot: SignatureSlot {
 					L: {{.SigSlot.L}},
@@ -174,7 +177,7 @@ def main() -> bool:
 	if err != nil {
 		panic(err)
 	}
-	buf.WriteString(fmt.Sprintf("	u64 round = %d\n", round))
+	buf.WriteString(fmt.Sprintf("	field round = %d\n", round))
 	buf.WriteString(fmt.Sprintf("	u8[DATA_LEN] data = %v\n", util.ToCommaSeparatedString(data[:])))
 	var veriferTemplate = `
 	field P = {{.LnProvenWeight}}

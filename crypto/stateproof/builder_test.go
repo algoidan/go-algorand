@@ -43,10 +43,10 @@ func (m testMessage) ToBeHashed() (protocol.HashID, []byte) {
 	return protocol.TestHashable, m
 }
 
-func (m testMessage) IntoStateProofMessageHash() StateProofMessageHash {
-	digest := crypto.GenericHashObj(crypto.HashFactory{HashType: StateProofMessageHashType}.NewHash(), m)
+func (m testMessage) IntoStateProofMessageHash() MessageHash {
+	digest := crypto.GenericHashObj(crypto.HashFactory{HashType: MessageHashType}.NewHash(), m)
 
-	hsh := StateProofMessageHash{}
+	hsh := MessageHash{}
 	copy(hsh[:], digest)
 	return hsh
 }

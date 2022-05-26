@@ -14,19 +14,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with go-algorand.  If not, see <https://www.gnu.org/licenses/>.
 
-package compactcert
+package stateproof
 
 import (
 	"fmt"
-	"testing"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/algorand/go-algorand/crypto"
 	"github.com/algorand/go-algorand/crypto/merklearray"
+	"github.com/algorand/go-algorand/test/partitiontest"
+	"github.com/stretchr/testify/require"
+	"testing"
+
 	"github.com/algorand/go-algorand/crypto/merklesignature"
 	"github.com/algorand/go-algorand/data/basics"
-	"github.com/algorand/go-algorand/test/partitiontest"
 )
 
 func TestCertToJSON(t *testing.T) {
@@ -59,7 +58,7 @@ func TestCertToJSON(t *testing.T) {
 	partcom, err := merklearray.BuildVectorCommitmentTree(basics.ParticipantsArray(parts), crypto.HashFactory{HashType: HashType})
 	a.NoError(err)
 
-	b, err := MkBuilder(data, compactCertRoundsForTests, uint64(totalWeight/2), parts, partcom, targetForSampleCert)
+	b, err := MkBuilder(data, stateProofIntervalForTests, uint64(totalWeight/2), parts, partcom, targetForSampleCert)
 	a.NoError(err)
 
 	for i := 0; i < npart; i++ {
@@ -74,24 +73,24 @@ func TestCertToJSON(t *testing.T) {
 	verif, err := MkVerifier(partcom.Root(), provenWt, targetForSampleCert)
 	a.NoError(err)
 
-	err = verif.Verify(compactCertRoundsForTests, data, cert)
+	err = verif.Verify(stateProofIntervalForTests, data, cert)
 	a.NoError(err, "failed to verify the compact cert")
 
 	certenc, err := cert.createSnarkFriendlyCert(data[:])
 	a.NoError(err)
 
-	fmt.Printf(toZokCode(certenc, verif, testMessage("hello world").IntoStateProofMessageHash(), compactCertRoundsForTests))
+	fmt.Printf(toZokCode(certenc, verif, testMessage("hello world").IntoStateProofMessageHash(), stateProofIntervalForTests))
 
 }
 
-func createParticipantAndSignature(a *require.Assertions, totalWeight int, npartHi int, data StateProofMessageHash) (basics.Participant, merklesignature.Signature) {
-	key := generateTestSigner(0, uint64(compactCertRoundsForTests)*7+1, compactCertRoundsForTests, a)
+func createParticipantAndSignature(a *require.Assertions, totalWeight int, npartHi int, data MessageHash) (basics.Participant, merklesignature.Signature) {
+	key := generateTestSigner(0, uint64(stateProofIntervalForTests)*7+1, stateProofIntervalForTests, a)
 	part := basics.Participant{
 		PK:     *key.GetVerifier(),
 		Weight: uint64(totalWeight / 2 / npartHi),
 	}
 
-	signerInRound := key.GetSigner(compactCertRoundsForTests)
+	signerInRound := key.GetSigner(stateProofIntervalForTests)
 	sig, err := signerInRound.SignBytes(data[:])
 	a.NoError(err, "failed to create keys")
 

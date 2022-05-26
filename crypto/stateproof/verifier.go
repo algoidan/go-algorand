@@ -57,9 +57,9 @@ func MkVerifier(partcom crypto.GenericDigest, provenWeight uint64, strengthTarge
 // represent all the verifier's trusted data. This function uses the Ln(provenWeight) approximation value
 func MkVerifierWithLnProvenWeight(partcom crypto.GenericDigest, lnProvenWt uint64, strengthTarget uint64) *Verifier {
 	return &Verifier{
-		strengthTarget:         strengthTarget,
-		lnProvenWeight:         lnProvenWt,
-		participantsCommitment: partcom,
+		StrengthTarget:         strengthTarget,
+		LnProvenWeight:         lnProvenWt,
+		ParticipantsCommitment: partcom,
 	}
 }
 
@@ -71,7 +71,7 @@ func (v *Verifier) Verify(round uint64, data MessageHash, s *StateProof) error {
 	}
 
 	nr := uint64(len(s.PositionsToReveal))
-	if err := verifyWeights(s.SignedWeight, v.lnProvenWeight, nr, v.strengthTarget); err != nil {
+	if err := verifyWeights(s.SignedWeight, v.LnProvenWeight, nr, v.StrengthTarget); err != nil {
 		return err
 	}
 
@@ -112,13 +112,13 @@ func (v *Verifier) Verify(round uint64, data MessageHash, s *StateProof) error {
 	}
 
 	// verify all the reveals proofs on the participant commitment.
-	if err := merklearray.VerifyVectorCommitment(v.participantsCommitment[:], parts, &s.PartProofs); err != nil {
+	if err := merklearray.VerifyVectorCommitment(v.ParticipantsCommitment[:], parts, &s.PartProofs); err != nil {
 		return err
 	}
 
 	choice := coinChoiceSeed{
-		partCommitment: v.participantsCommitment,
-		lnProvenWeight: v.lnProvenWeight,
+		partCommitment: v.ParticipantsCommitment,
+		lnProvenWeight: v.LnProvenWeight,
 		sigCommitment:  s.SigCommit,
 		signedWeight:   s.SignedWeight,
 		data:           data,

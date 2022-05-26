@@ -321,8 +321,8 @@ func (s *Signature) GetFixedLengthHashableRepresentation() ([]byte, error) {
 	return merkleSignatureBytes, nil
 }
 
-func (v Verifier) String() string {
-	return util.ToCommaSeparatedString(v[:])
+func (c Commitment) String() string {
+	return util.ToCommaSeparatedString(c[:])
 }
 
 // SnarkFriendlySignature is an extension for the merkle signature scheme.
