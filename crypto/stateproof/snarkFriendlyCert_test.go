@@ -58,12 +58,12 @@ func TestCertToJSON(t *testing.T) {
 	partcom, err := merklearray.BuildVectorCommitmentTree(basics.ParticipantsArray(parts), crypto.HashFactory{HashType: HashType})
 	a.NoError(err)
 
-	b, err := MkBuilder(data, stateProofIntervalForTests, uint64(totalWeight/2), parts, partcom, targetForSampleCert)
+	b, err := MakeBuilder(data, stateProofIntervalForTests, uint64(totalWeight/2), parts, partcom, targetForSampleCert)
 	a.NoError(err)
 
 	for i := 0; i < npart; i++ {
 		a.False(b.Present(uint64(i)))
-		a.NoError(b.IsValid(uint64(i), sigs[i], true))
+		a.NoError(b.IsValid(uint64(i), &sigs[i], true))
 		b.Add(uint64(i), sigs[i])
 	}
 
