@@ -80,6 +80,7 @@ type StatusReport struct {
 	CatchupTime                        time.Duration
 	HasSyncedSinceStartup              bool
 	StoppedAtUnsupportedRound          bool
+	LastStateProofRound                uint64
 	LastCatchpoint                     string // the last catchpoint hit by the node. This would get updated regardless of whether the node is catching up using catchpoints or not.
 	Catchpoint                         string // the catchpoint where we're currently catching up to. If the node isn't in fast catchup mode, it will be empty.
 	CatchpointCatchupTotalAccounts     uint64
@@ -701,6 +702,7 @@ func catchpointCatchupStatus(lastBlockHeader bookkeeping.BlockHeader, stats catc
 
 	// report back the catchpoint catchup progress statistics
 	s.Catchpoint = stats.CatchpointLabel
+	s.LastStateProofRound = uint64(lastBlockHeader.StateProofTracking[protocol.StateProofBasic].StateProofNextRound)
 	s.CatchpointCatchupTotalAccounts = stats.TotalAccounts
 	s.CatchpointCatchupProcessedAccounts = stats.ProcessedAccounts
 	s.CatchpointCatchupVerifiedAccounts = stats.VerifiedAccounts
@@ -728,6 +730,7 @@ func latestBlockStatus(ledger *data.Ledger, catchupService *catchup.Service) (s 
 	s.LastCatchpoint = ledger.GetLastCatchpointLabel()
 	s.SynchronizingTime = catchupService.SynchronizingTime()
 	s.CatchupTime = catchupService.SynchronizingTime()
+	s.LastStateProofRound = uint64(b.StateProofTracking[protocol.StateProofBasic].StateProofNextRound)
 
 	s.UpgradePropose = b.UpgradeVote.UpgradePropose
 	s.UpgradeApprove = b.UpgradeApprove

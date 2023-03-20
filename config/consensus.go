@@ -724,8 +724,8 @@ func initConsensusProtocols() {
 
 	// Base consensus protocol version, v7.
 	v7 := ConsensusParams{
-		UpgradeVoteRounds:        10000,
-		UpgradeThreshold:         9000,
+		UpgradeVoteRounds:        50,
+		UpgradeThreshold:         5,
 		DefaultUpgradeWaitRounds: 10000,
 		MaxVersionStringLen:      64,
 
@@ -942,7 +942,7 @@ func initConsensusProtocols() {
 	// v22 is an upgrade which allows tuning the number of rounds to wait to execute upgrades.
 	v22 := v21
 	v22.ApprovedUpgrades = map[protocol.ConsensusVersion]uint64{}
-	v22.MinUpgradeWaitRounds = 10000
+	v22.MinUpgradeWaitRounds = 5
 	v22.MaxUpgradeWaitRounds = 150000
 	Consensus[protocol.ConsensusV22] = v22
 
@@ -1230,6 +1230,8 @@ func initConsensusProtocols() {
 	v35 := v34
 	v35.StateProofExcludeTotalWeightWithRewards = true
 
+	v35.AgreementFilterTimeout = 1000 * time.Millisecond
+	v35.AgreementFilterTimeoutPeriod0 = 1000 * time.Millisecond
 	v35.ApprovedUpgrades = map[protocol.ConsensusVersion]uint64{}
 
 	Consensus[protocol.ConsensusV35] = v35

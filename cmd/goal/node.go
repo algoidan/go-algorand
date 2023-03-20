@@ -460,6 +460,7 @@ func makeStatusString(stat model.NodeStatusResponse) string {
 			stat.LastRound,
 			lastRoundTime,
 			catchupTime,
+			stat.LastStateproofRound,
 			stat.LastVersion,
 			stat.NextVersion,
 			stat.NextVersionRound,

@@ -775,6 +775,7 @@ func (v2 *Handlers) GetStatus(ctx echo.Context) error {
 	response := model.NodeStatusResponse{
 		LastRound:                   uint64(stat.LastRound),
 		LastVersion:                 string(stat.LastVersion),
+		LastStateproofRound:         stat.LastStateProofRound,
 		NextVersion:                 string(stat.NextVersion),
 		NextVersionRound:            uint64(stat.NextVersionRound),
 		NextVersionSupported:        stat.NextVersionSupported,

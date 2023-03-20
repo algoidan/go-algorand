@@ -912,6 +912,9 @@ type NodeStatusResponse struct {
 	// LastRound LastRound indicates the last round seen
 	LastRound uint64 `json:"last-round"`
 
+	// LastStateproofRound last stateproof round
+	LastStateproofRound uint64 `json:"last-stateproof-round"`
+
 	// LastVersion LastVersion indicates the last consensus version supported
 	LastVersion string `json:"last-version"`
 

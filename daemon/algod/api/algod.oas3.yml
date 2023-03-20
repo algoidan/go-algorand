@@ -590,6 +590,10 @@
                   "description": "LastRound indicates the last round seen",
                   "type": "integer"
                 },
+                "last-stateproof-round": {
+                  "description": "last stateproof round",
+                  "type": "integer"
+                },
                 "last-version": {
                   "description": "LastVersion indicates the last consensus version supported",
                   "type": "string"
@@ -650,6 +654,7 @@
               "required": [
                 "catchup-time",
                 "last-round",
+                "last-stateproof-round",
                 "last-version",
                 "next-version",
                 "next-version-round",
@@ -4670,6 +4675,10 @@
                       "description": "LastRound indicates the last round seen",
                       "type": "integer"
                     },
+                    "last-stateproof-round": {
+                      "description": "last stateproof round",
+                      "type": "integer"
+                    },
                     "last-version": {
                       "description": "LastVersion indicates the last consensus version supported",
                       "type": "string"
@@ -4730,6 +4739,7 @@
                   "required": [
                     "catchup-time",
                     "last-round",
+                    "last-stateproof-round",
                     "last-version",
                     "next-version",
                     "next-version-round",
@@ -4845,6 +4855,10 @@
                       "description": "LastRound indicates the last round seen",
                       "type": "integer"
                     },
+                    "last-stateproof-round": {
+                      "description": "last stateproof round",
+                      "type": "integer"
+                    },
                     "last-version": {
                       "description": "LastVersion indicates the last consensus version supported",
                       "type": "string"
@@ -4905,6 +4919,7 @@
                   "required": [
                     "catchup-time",
                     "last-round",
+                    "last-stateproof-round",
                     "last-version",
                     "next-version",
                     "next-version-round",

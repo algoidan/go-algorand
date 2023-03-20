@@ -395,8 +395,10 @@ func (s *Service) fetchAndWrite(r basics.Round, prevFetchCompleteChan chan bool,
 						s.log.Warnf("fetchAndWrite(%d): failed to validate block : %v", r, err)
 						return false
 					}
+					//time.Sleep(time.Millisecond * 500)
 					err = s.ledger.AddValidatedBlock(*vb, *cert)
 				} else {
+					//time.Sleep(time.Millisecond * 500)
 					err = s.ledger.AddBlock(*block, *cert)
 				}
 

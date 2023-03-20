@@ -519,6 +519,7 @@ func (spw *Worker) broadcastSigs(brnd basics.Round, stateProofNextRound basics.R
 				Round:         rnd,
 				Sig:           sig.sig,
 			}
+			spw.log.Warnf("spw.broadcastSigs: Broadcast for %d", rnd)
 			err = spw.net.Broadcast(context.Background(), protocol.StateProofSigTag,
 				protocol.Encode(&sfa), false, nil)
 			if err != nil {
@@ -670,8 +671,6 @@ func (spw *Worker) tryBroadcast() {
 		err = spw.txnSender.BroadcastInternalSignedTxGroup([]transactions.SignedTxn{stxn})
 		if err != nil {
 			spw.log.Warnf("spw.tryBroadcast: broadcasting state proof txn for %d: %v", rnd, err)
-			// if this StateProofTxn was rejected, the next one would be rejected as well since state proof should be added in
-			// a sequential order
 			break
 		}
 	}

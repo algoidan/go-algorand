@@ -3862,6 +3862,7 @@
           "next-version-round",
           "next-version-supported",
           "stopped-at-unsupported-round",
+          "last-stateproof-round",
           "time-since-last-round"
         ],
         "properties": {
@@ -3959,6 +3960,10 @@
           },
           "upgrade-no-votes": {
             "description": "No votes cast for consensus upgrade",
+            "type": "integer"
+          },
+          "last-stateproof-round": {
+            "description": "last stateproof round",
             "type": "integer"
           },
           "upgrade-next-protocol-vote-before": {
