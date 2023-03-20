@@ -677,9 +677,9 @@ func (spw *Worker) tryBroadcast() {
 }
 
 func (spw *Worker) invokeBuilder(r basics.Round) {
-	spw.mu.Lock()
+	spw.signedMu.Lock()
 	spw.signed = r
-	spw.mu.Unlock()
+	spw.signedMu.Unlock()
 
 	select {
 	case spw.signedCh <- struct{}{}:
@@ -688,8 +688,8 @@ func (spw *Worker) invokeBuilder(r basics.Round) {
 }
 
 func (spw *Worker) lastSignedBlock() basics.Round {
-	spw.mu.Lock()
-	defer spw.mu.Unlock()
+	spw.signedMu.Lock()
+	defer spw.signedMu.Unlock()
 	return spw.signed
 }
 
